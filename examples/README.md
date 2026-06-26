@@ -15,6 +15,17 @@
 | `values-web-httproute.yaml` | 需要通过 HTTPRoute 暴露 Web 服务 |
 | `values-shared-models.yaml` | 只读挂载公共模型权重 |
 
+默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。外部 Registry 镜像经雄安 Harbor 代理项目拉取，路径规则见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。
+
+### 部署前必填项
+
+| 字段 | 说明 |
+|------|------|
+| `NameSpace` | 须与 `helm -n <namespace>` 一致 |
+| `ContainerImage` | 默认 `llm-course/lab:v2`；自定义任务改为个人 Harbor 项目下的镜像 |
+| `SharedModels.claimName` | 仅平台已创建并授权的公共模型 PVC 可填 |
+| `HTTPRoute.host` | 须先按平台规则申请子域名 |
+
 部署示例：
 
 ```bash
@@ -33,7 +44,7 @@ helm upgrade --install my-task ./charts/xay-ai \
 | `service-web.yaml` | Web Service 示例 |
 | `httproute-web.yaml` | Gateway API HTTPRoute 示例 |
 
-应用前请替换 `namespace`、镜像地址、域名和 PVC 名称。
+应用前请替换 `NameSpace`、按需替换 `ContainerImage`、域名和 PVC 名称。
 
 Web 服务外部访问配置详见 [`../docs/web-httproute-guide.md`](../docs/web-httproute-guide.md)，访问格式为 `https://<子域名>.xa.hqzyai.com:9443/`。
 

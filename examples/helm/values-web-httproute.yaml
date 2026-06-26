@@ -1,6 +1,6 @@
 NameSpace: your-namespace
 BaseName: web-demo
-ContainerImage: harbor.xa.hqzyai.com:19443/your-project/web-demo:tag
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: H200
 
 Limits:
@@ -21,6 +21,9 @@ Workspace:
   mountPath: /workspace
   readOnly: false
 
+Scratch:
+  enabled: false
+
 ExtraPort: 7860
 
 HTTPRoute:
@@ -34,4 +37,5 @@ HTTPRoute:
   pathPrefix: /
 
 Command: '["bash", "-lc", "--"]'
+# 须在 /workspace 准备 app.py，或改为常驻命令以便先验证 HTTPRoute
 Args: '["cd /workspace && python app.py --host 0.0.0.0 --port 7860"]'

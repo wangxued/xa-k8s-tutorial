@@ -6,8 +6,8 @@ NameSpace: ""
 # 任务基础名称，用于生成 Deployment、Service、PVC 等资源名。
 BaseName: ai-workload
 
-# 容器镜像。建议使用 harbor.xa.hqzyai.com:19443 下的个人或项目镜像。
-ContainerImage: harbor.xa.hqzyai.com:19443/library/pytorch:latest
+# 容器镜像。示例默认镜像；业务镜像请 push 到 SaaS 分配的个人 Harbor 项目。
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 ImagePullPolicy: IfNotPresent
 
 # GPU 类型。当前支持 5090、H200；后续 B300 到位后可扩展。

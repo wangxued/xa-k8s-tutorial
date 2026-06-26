@@ -1,6 +1,6 @@
 NameSpace: your-namespace
 BaseName: train-5090-nfs
-ContainerImage: harbor.xa.hqzyai.com:19443/your-project/your-image:tag
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: "5090"
 
 Limits:

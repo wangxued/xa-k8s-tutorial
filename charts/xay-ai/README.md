@@ -49,16 +49,18 @@ helm uninstall my-task -n <namespace>
 ```yaml
 NameSpace: your-namespace
 BaseName: train
-ContainerImage: harbor.xa.hqzyai.com:19443/<project>/<image>:<tag>
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: H200
 ```
 
 字段说明：
 
-- `NameSpace`：个人 namespace，可在华清云 SaaS 查看。
+- `NameSpace`：个人 namespace，可在华清云 SaaS 查看；须与 `helm -n` 一致。
 - `BaseName`：任务基础名称，用于生成资源名。
-- `ContainerImage`：容器镜像地址。
+- `ContainerImage`：容器镜像地址。示例默认镜像为 `llm-course/lab:v2`；自定义任务 push 到个人 Harbor 项目后替换。
 - `GPU`：GPU 类型，当前可选 `5090` 或 `H200`。
+
+Harbor 镜像与代理路径见 [`../../docs/harbor-images.md`](../../docs/harbor-images.md)。
 
 ## GPU 与资源配置
 

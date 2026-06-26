@@ -1,0 +1,12 @@
+# 本地 Helm / Harbor 验证产物
+.validate-helm-examples-*/
+.validate-harbor-proxies-*/
+scripts/validate-*
+
+# 编辑器与系统文件
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

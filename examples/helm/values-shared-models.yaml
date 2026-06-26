@@ -1,6 +1,6 @@
 NameSpace: your-namespace
 BaseName: inference-shared-models
-ContainerImage: harbor.xa.hqzyai.com:19443/your-project/inference:tag
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: H200
 
 Limits:

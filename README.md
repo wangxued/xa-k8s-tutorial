@@ -9,7 +9,7 @@
 | 华清云 SaaS | <https://xaai.hqzyai.com:19443/> | 统一登录、查看 namespace、下载 kubeconfig、查看 Harbor 账号、平台侧资源管理 |
 | SaaS 帮助文档 | <https://saasdoc.xa.hqzyai.com:19443/> | 平台侧功能说明 |
 | K8s API | `https://k8s-yw.hqzyai.com:6443` | kubeconfig 访问集群 API |
-| Harbor | <https://harbor.xa.hqzyai.com:19443/> | 私有镜像仓库 |
+| Harbor | <https://harbor.xa.hqzyai.com:19443/> | 私有镜像仓库；示例默认镜像 `llm-course/lab:v2`，详见 [`docs/harbor-images.md`](docs/harbor-images.md) |
 
 ## 使用边界
 
@@ -53,7 +53,7 @@ helm upgrade --install my-task ./charts/xay-ai \
   -f values-my-task.yaml
 ```
 
-详细参数见 [`charts/xay-ai/README.md`](charts/xay-ai/README.md)。
+详细参数见 [`charts/xay-ai/README.md`](charts/xay-ai/README.md)。镜像与 Harbor 代理说明见 [`docs/harbor-images.md`](docs/harbor-images.md)。
 
 ## 存储选择
 
@@ -76,6 +76,7 @@ StorageClass 支持矩阵：
 |------|------|
 | [`docs/kubeconfig-local-setup.md`](docs/kubeconfig-local-setup.md) | 本机 kubeconfig 配置、多集群管理、Lens/VS Code context 重复排查 |
 | [`charts/xay-ai/README.md`](charts/xay-ai/README.md) | Helm Chart 参数、GPU/StorageClass、PVC、共享内存、HTTPRoute 配置 |
+| [`docs/harbor-images.md`](docs/harbor-images.md) | Harbor 默认镜像、个人项目 push、Docker Hub 等外部镜像代理路径 |
 | [`docs/web-httproute-guide.md`](docs/web-httproute-guide.md) | Web 服务外部域名、HTTPRoute、`https://<域名>:9443/` 访问说明 |
 | [`examples/README.md`](examples/README.md) | Helm values 和原生 YAML 示例说明 |
 
