@@ -2,6 +2,8 @@
 .validate-helm-examples-*/
 .validate-harbor-proxies-*/
 scripts/validate-*
+testing/
+
 
 # 编辑器与系统文件
 .DS_Store

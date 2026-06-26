@@ -16,6 +16,18 @@ GPU: H200
 
 Replicas: 1
 
+# Deployment 更新策略。默认 RollingUpdate（滚动更新，尽量保持服务可用）。
+Strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+
+# 单机多卡占满整节点、或同时挂载 local-path scratch 时，建议改为 Recreate；
+# 风险见 charts/xay-ai/README.md「Deployment 更新策略」。
+# Strategy:
+#   type: Recreate
+
 # 可选：覆盖自动生成名称。
 # DeployName: ""
 # Label: ""

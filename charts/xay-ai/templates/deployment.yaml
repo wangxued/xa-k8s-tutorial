@@ -18,6 +18,16 @@ metadata:
 {{ include "xay-ai.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.Replicas | default 1 }}
+{{- if eq (.Values.Strategy.type | default "RollingUpdate") "Recreate" }}
+  strategy:
+    type: Recreate
+{{- else }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.Strategy.rollingUpdate.maxSurge | default "25%" | quote }}
+      maxUnavailable: {{ .Values.Strategy.rollingUpdate.maxUnavailable | default "25%" | quote }}
+{{- end }}
   selector:
     matchLabels:
 {{ include "xay-ai.selectorLabels" . | nindent 6 }}

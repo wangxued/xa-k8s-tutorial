@@ -15,7 +15,7 @@
 | `values-web-httproute.yaml` | 需要通过 HTTPRoute 暴露 Web 服务 |
 | `values-shared-models.yaml` | 只读挂载公共模型权重 |
 
-默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。外部 Registry 镜像经雄安 Harbor 代理项目拉取，路径规则见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。
+默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。
 
 ### 部署前必填项
 

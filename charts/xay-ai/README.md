@@ -60,7 +60,7 @@ GPU: H200
 - `ContainerImage`：容器镜像地址。示例默认镜像为 `llm-course/lab:v2`；自定义任务 push 到个人 Harbor 项目后替换。
 - `GPU`：GPU 类型，当前可选 `5090` 或 `H200`。
 
-Harbor 镜像与代理路径见 [`../../docs/harbor-images.md`](../../docs/harbor-images.md)。
+Harbor 镜像与个人项目用法见 [`../../docs/harbor-images.md`](../../docs/harbor-images.md)。
 
 ## GPU 与资源配置
 
@@ -77,6 +77,44 @@ Limits:
 - `Limits.CPU` 和 `Limits.memory` 同时作为 requests 和 limits。
 - 总资源不能超过个人 namespace 的 quota。
 - GPU 任务默认带有 `nvidia.com/gpu=true:NoSchedule` toleration，并按 `gpu-type` 标签调度到对应节点。
+
+## Deployment 更新策略
+
+默认使用 Kubernetes 标准滚动更新（`RollingUpdate`）：
+
+```yaml
+Strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+```
+
+单机多卡（如 H200 整节点 8 卡）、或同时挂载 `local-path` scratch 卷时，建议改为 `Recreate`：
+
+```yaml
+Strategy:
+  type: Recreate
+```
+
+### 为何单机多卡建议 Recreate
+
+滚动更新期间，新旧 Pod 可能短暂并存。若新 Pod 申请的 GPU 数接近或等于单节点总量，且 scratch 卷已通过 `local-path` 绑定到某一节点，则新 Pod 只能调度到该节点；旧 Pod 未释放 GPU 时，新 Pod 会长期 `Pending`。`Recreate` 会先终止旧 Pod、再创建新 Pod，从而释放 GPU 与节点-local 卷绑定。
+
+### Recreate 风险说明
+
+| 风险 | 说明 |
+|------|------|
+| 服务中断 | 升级过程中旧 Pod 被删除后、新 Pod 就绪前，存在无实例可用的时间窗口 |
+| 任务中断 | 正在运行的训练、推理或 Notebook 进程会被强制终止；未写入持久卷（如 `/workspace`）或未 checkpoint 的进度可能丢失 |
+| 不适合 Web 常驻服务 | 需要对外持续提供 HTTP/SSH 且期望零停机的多副本服务，应保留 `RollingUpdate` |
+| 多副本同时重建 | `Replicas` 大于 1 时，所有副本会在同一轮更新中依次替换，整体容量会短暂降为零 |
+
+建议：
+
+- 单机占满 GPU、一次性训练/压测任务：使用 `Recreate`（示例见 `examples/helm/values-h200-8gpu-train.yaml`）。
+- 长期在线 Web 或 SSH 开发环境：保持默认 `RollingUpdate`，并将 `Replicas` 设为 1 且 GPU 占用小于单节点总量，以便滚动替换。
+- 升级前将关键数据保存至 `/workspace` 等持久卷，或确认任务可安全重跑。
 
 ## StorageClass 支持矩阵
 

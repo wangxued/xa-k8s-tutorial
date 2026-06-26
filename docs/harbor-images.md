@@ -1,141 +1,104 @@
 # Harbor 镜像使用说明
 
-云网 K8s 集群优先从雄安 Harbor 拉取镜像。Harbor 地址与 SaaS 分配的账号见华清云 SaaS。
+云网 K8s 集群从雄安 Harbor 拉取镜像。Harbor 地址与个人账号见华清云 SaaS。
 
 | 项 | 值 |
 |----|-----|
 | Harbor 地址 | `https://harbor.xa.hqzyai.com:19443/` |
+| Registry 主机名（K8s / Docker） | `harbor.xa.hqzyai.com:19443` |
 | 示例默认镜像 | `harbor.xa.hqzyai.com:19443/llm-course/lab:v2` |
 
-## 示例默认镜像
+## 账号与项目
 
-Chart 与示例默认使用 `llm-course/lab:v2`：
+登录华清云 SaaS 后可查看：
 
-```yaml
-ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+- Harbor 用户名与密码（或 Robot 凭据，以 SaaS 展示为准）
+- 个人 Harbor 项目名称，通常为 `cs-<用户名>`（如 `cs-wangxuedong`）
+
+镜像按 **项目 / 仓库名 : 标签** 组织，完整路径示例：
+
+```text
+harbor.xa.hqzyai.com:19443/cs-<username>/my-app:v1
 ```
 
-业务镜像 push 到 SaaS 分配的个人 Harbor 项目（如 `cs-<用户名>`）后，替换 `ContainerImage` 即可。
+| 项目类型 | 命名示例 | 权限 |
+|----------|----------|------|
+| 平台示例 | `llm-course/lab:v2` | 仅 pull |
+| 个人项目 | `cs-<username>/...` | pull / push（以 SaaS 分配为准） |
 
-## 本机拉取与推送
+## 本机登录与镜像操作
 
 ```bash
 docker login harbor.xa.hqzyai.com:19443
+# 按 SaaS 提示输入用户名与密码
+
+# 拉取平台示例镜像
 docker pull harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+
+# 构建并 push 到个人项目
 docker tag my-app:latest harbor.xa.hqzyai.com:19443/cs-<username>/my-app:v1
 docker push harbor.xa.hqzyai.com:19443/cs-<username>/my-app:v1
 ```
 
-K8s 部署时在 values 或 YAML 中填写完整镜像路径；namespace 已配置 `imagePullSecret` 时，Pod 内无需重复登录。
-
-## 镜像代理项目
-
-雄安 Harbor 提供 Proxy Cache 项目，按需缓存外部 Registry 镜像。Pod 与 Dockerfile 统一使用 **`harbor.xa.hqzyai.com:19443/<代理项目>/...`** 路径。
-
-| 代理项目 | 对应上游 | 路径示例 |
-|----------|----------|----------|
-| `dockerhub-proxy` | Docker Hub | `harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim` |
-| `ghcr-proxy` | `ghcr.io` | `harbor.xa.hqzyai.com:19443/ghcr-proxy/<org>/<repo>:<tag>` |
-| `quay-proxy` | `quay.io` | `harbor.xa.hqzyai.com:19443/quay-proxy/<path>:<tag>` |
-| `registry-k8s-proxy` | `registry.k8s.io` | `harbor.xa.hqzyai.com:19443/registry-k8s-proxy/<path>:<tag>` |
-| `nvcr-proxy` | `nvcr.io` | `harbor.xa.hqzyai.com:19443/nvcr-proxy/<path>:<tag>` |
-
-代理项目为**只读**，不支持 push。
-
-### 路径换算规则
-
-**Docker Hub（`dockerhub-proxy`）**
-
-Docker Hub 官方镜像（无组织前缀）须加 `library/`：
-
-| 上游写法 | Harbor 路径 |
-|----------|-------------|
-| `python:3.12-slim` | `harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim` |
-| `busybox:1.36` | `harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/busybox:1.36` |
-| `grafana/grafana:12.3.0` | `harbor.xa.hqzyai.com:19443/dockerhub-proxy/grafana/grafana:12.3.0` |
-
-**GHCR（`ghcr-proxy`）**
-
-去掉 `ghcr.io/` 前缀，其余路径不变：
-
-| 上游 | Harbor 路径 |
-|------|-------------|
-| `ghcr.io/org/app:v1` | `harbor.xa.hqzyai.com:19443/ghcr-proxy/org/app:v1` |
-
-**registry.k8s.io（`registry-k8s-proxy`）**
-
-去掉 `registry.k8s.io/` 前缀：
-
-| 上游 | Harbor 路径 |
-|------|-------------|
-| `registry.k8s.io/pause:3.10` | `harbor.xa.hqzyai.com:19443/registry-k8s-proxy/pause:3.10` |
-| `registry.k8s.io/coredns/coredns:v1.12.4` | `harbor.xa.hqzyai.com:19443/registry-k8s-proxy/coredns/coredns:v1.12.4` |
-
-**NVIDIA NGC（`nvcr-proxy`）**
-
-去掉 `nvcr.io/` 前缀：
-
-| 上游 | Harbor 路径 |
-|------|-------------|
-| `nvcr.io/nvidia/pytorch:24.01-py3` | `harbor.xa.hqzyai.com:19443/nvcr-proxy/nvidia/pytorch:24.01-py3` |
-
-**Quay（`quay-proxy`）**
-
-去掉 `quay.io/` 前缀：
-
-| 上游 | Harbor 路径 |
-|------|-------------|
-| `quay.io/prometheus/node-exporter:v1.8.0` | `harbor.xa.hqzyai.com:19443/quay-proxy/prometheus/node-exporter:v1.8.0` |
-
 ## 在 K8s / Helm 中使用
+
+个人 namespace 通常已配置 `imagePullSecret`，Pod 内无需重复 `docker login`。部署时填写 **完整镜像路径**：
 
 Helm values：
 
 ```yaml
-ContainerImage: harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+# 自定义任务：
+# ContainerImage: harbor.xa.hqzyai.com:19443/cs-<username>/my-app:v1
 ```
 
 原生 Deployment：
 
 ```yaml
-image: harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim
+image: harbor.xa.hqzyai.com:19443/cs-<username>/my-app:v1
 ```
 
 Dockerfile：
 
 ```dockerfile
-FROM harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim
+FROM harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 ```
 
-## 个人项目：固定版本镜像
+Chart 与 [`examples/helm/`](../examples/helm/) 下示例默认使用 `llm-course/lab:v2`。自定义业务镜像 push 到个人项目后，替换 `ContainerImage` 即可。
 
-如需长期固定某版本、减少重复拉取，可将代理镜像 retag 后 push 到个人项目：
+## 外部镜像纳入 Harbor 的推荐方式
+
+若 Dockerfile 或任务依赖 Docker Hub、GHCR 等外部 Registry 镜像，建议在有出网条件的构建机上拉取原始镜像，**retag 并 push 到个人 Harbor 项目**，再在集群中使用个人项目路径：
 
 ```bash
-docker pull harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim
-docker tag harbor.xa.hqzyai.com:19443/dockerhub-proxy/library/python:3.12-slim \
+docker pull python:3.12-slim
+docker tag python:3.12-slim \
   harbor.xa.hqzyai.com:19443/cs-<username>/python:3.12-slim
 docker push harbor.xa.hqzyai.com:19443/cs-<username>/python:3.12-slim
+```
+
+部署：
+
+```yaml
+ContainerImage: harbor.xa.hqzyai.com:19443/cs-<username>/python:3.12-slim
 ```
 
 ## 常见问题
 
 **镜像拉取 `not found`**
 
-- 核对代理项目名称、路径与 tag。
-- Docker Hub 官方镜像是否遗漏 `library/`。
-- 确认代理项目类型为 Proxy Cache，且已绑定对应仓库目标。
-- 确认 `imagePullSecret` 有效（个人项目 pull 时）。
+- 核对 Registry 主机名为 `harbor.xa.hqzyai.com:19443`（不是 `9443`）。
+- 核对项目名、仓库名与 tag 是否与 Harbor UI 一致。
+- 个人项目镜像须已完成 `docker push`。
+- 确认 namespace 的 `imagePullSecret` 有效（SaaS 侧 Harbor 账号变更后可能需更新 kubeconfig / secret）。
 
 **`ImagePullBackOff`**
 
-- Registry 须为 `harbor.xa.hqzyai.com:19443`（不是 `9443`）。
-- 代理项目首次拉取需等待缓存完成，大镜像耗时较长属正常现象。
-- 优先核对镜像 tag 是否存在（例如 `pause:3.9` 等旧 tag 可能已不可用，可换用较新版本）。
+- 优先在 Harbor Web UI 确认 tag 是否存在。
+- 大镜像首次拉取耗时较长，可通过 `kubectl describe pod` 查看事件是否仍在 `Pulling`。
+- 若长期失败，核对镜像路径与个人项目权限。
 
-**业务镜像与代理镜像的区别**
+**`Unauthorized` / 认证失败**
 
-| 类型 | 项目 | 操作 |
-|------|------|------|
-| 业务镜像 | `cs-*`、`llm-course` 等 | 可 push / pull |
-| 代理镜像 | `*-proxy` | 仅 pull（只读缓存） |
+- 本机重新 `docker login harbor.xa.hqzyai.com:19443`。
+- 集群内问题联系平台管理员核对 namespace 的 `imagePullSecret` 是否与当前 Harbor 账号一致。
