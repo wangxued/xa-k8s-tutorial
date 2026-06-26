@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workspace-nfs
+  namespace: your-namespace
+spec:
+  storageClassName: h3c-csi-sc-nfs
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 200Gi

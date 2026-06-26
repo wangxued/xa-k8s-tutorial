@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-workload
+  namespace: your-namespace
+  labels:
+    app: ai-workload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-workload
+  template:
+    metadata:
+      labels:
+        app: ai-workload
+    spec:
+      nodeSelector:
+        gpu-type: H200
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: ai-workload
+          image: harbor.xa.hqzyai.com:19443/project/image:tag
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "-lc", "--"]
+          args: ["cd /workspace && while true; do sleep 3600; done"]
+          resources:
+            limits:
+              cpu: "8"
+              memory: 32Gi
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "8"
+              memory: 32Gi
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: workspace-epc-h200
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi

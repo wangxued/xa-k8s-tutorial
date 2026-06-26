@@ -1,0 +1,31 @@
+NameSpace: your-namespace
+BaseName: inference-shared-models
+ContainerImage: harbor.xa.hqzyai.com:19443/your-project/inference:tag
+GPU: H200
+
+Limits:
+  CPU: "8"
+  memory: 48Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 16Gi
+
+Workspace:
+  enabled: true
+  create: true
+  storageClassName: h3c-csi-sc-nfs
+  size: 100Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+SharedModels:
+  enabled: true
+  claimName: pvc-shared-models
+  mountPath: /models
+  readOnly: true
+
+Command: '["bash", "-lc", "--"]'
+Args: '["ls -lah /models && while true; do sleep 3600; done"]'

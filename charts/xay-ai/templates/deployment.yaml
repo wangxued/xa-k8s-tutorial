@@ -1,0 +1,180 @@
+{{- $gpuType := toString (.Values.GPU | default "") -}}
+{{- $gpuCount := int (.Values.Limits.GPU | default 0) -}}
+{{- if and (eq $gpuType "5090") .Values.Workspace.enabled (eq .Values.Workspace.storageClassName "h3c-csi-sc-epc") -}}
+{{- fail "5090 nodes only support h3c-csi-sc-nfs. Change Workspace.storageClassName to h3c-csi-sc-nfs." -}}
+{{- end -}}
+{{- if and .Values.SharedModels.enabled (not .Values.SharedModels.claimName) -}}
+{{- fail "SharedModels.claimName is required when SharedModels.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.SharedWritable.enabled (not .Values.SharedWritable.claimName) -}}
+{{- fail "SharedWritable.claimName is required when SharedWritable.enabled is true." -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "xay-ai.fullname" . }}
+  namespace: {{ include "xay-ai.namespace" . }}
+  labels:
+{{ include "xay-ai.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.Replicas | default 1 }}
+  selector:
+    matchLabels:
+{{ include "xay-ai.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+{{ include "xay-ai.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsUser: {{ .Values.UID | default 0 }}
+        runAsGroup: {{ .Values.GID | default 0 }}
+{{- if or (and $gpuType (ne (lower $gpuType) "none") (gt $gpuCount 0)) .Values.NodeSelector }}
+      nodeSelector:
+{{- if and $gpuType (ne (lower $gpuType) "none") (gt $gpuCount 0) }}
+        gpu-type: {{ $gpuType | quote }}
+{{- end }}
+{{- with .Values.NodeSelector }}
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- end }}
+{{- if or (gt $gpuCount 0) .Values.Tolerations }}
+      tolerations:
+{{- if gt $gpuCount 0 }}
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+{{- end }}
+{{- with .Values.Tolerations }}
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- end }}
+{{- with .Values.Affinity }}
+      affinity:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- if .Values.UseEGL }}
+      initContainers:
+        - name: init-egl-libs
+          image: {{ .Values.EGLImage | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-a", "/egl-libs/.", "/target/"]
+          volumeMounts:
+            - name: egl-libs
+              mountPath: /target
+{{- end }}
+      containers:
+        - name: {{ include "xay-ai.containerName" . }}
+          image: {{ .Values.ContainerImage | quote }}
+          imagePullPolicy: {{ .Values.ImagePullPolicy | default "IfNotPresent" }}
+{{- if .Values.Command }}
+          command: {{ .Values.Command }}
+{{- if .Values.Args }}
+          args: {{ .Values.Args }}
+{{- end }}
+{{- else }}
+          command: ["bash", "-lc", "--"]
+          args: ["while true; do sleep 3600; done"]
+{{- end }}
+{{- if or .Values.UseEGL .Values.ExtraEnv }}
+          env:
+{{- if .Values.UseEGL }}
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: "compute,utility,graphics"
+            - name: __EGL_VENDOR_LIBRARY_DIRS
+              value: "/egl-libs/glvnd"
+            - name: LD_LIBRARY_PATH
+              value: "/egl-libs/lib"
+{{- end }}
+{{- with .Values.ExtraEnv }}
+{{ toYaml . | nindent 12 }}
+{{- end }}
+{{- end }}
+          ports:
+{{- range .Values.Service.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .targetPort | default .port }}
+              protocol: TCP
+{{- end }}
+{{- if .Values.ExtraPort }}
+            - name: extra
+              containerPort: {{ .Values.ExtraPort }}
+              protocol: TCP
+{{- end }}
+          resources:
+            limits:
+              cpu: {{ .Values.Limits.CPU | quote }}
+              memory: {{ .Values.Limits.memory | quote }}
+{{- if gt $gpuCount 0 }}
+              nvidia.com/gpu: {{ $gpuCount }}
+{{- end }}
+            requests:
+              cpu: {{ .Values.Limits.CPU | quote }}
+              memory: {{ .Values.Limits.memory | quote }}
+          volumeMounts:
+{{- if .Values.Workspace.enabled }}
+            - name: workspace
+              mountPath: {{ .Values.Workspace.mountPath | default "/workspace" }}
+              readOnly: {{ .Values.Workspace.readOnly | default false }}
+{{- end }}
+{{- if .Values.Scratch.enabled }}
+            - name: scratch
+              mountPath: {{ .Values.Scratch.mountPath | default "/scratch" }}
+{{- end }}
+{{- if .Values.SharedModels.enabled }}
+            - name: shared-models
+              mountPath: {{ .Values.SharedModels.mountPath | default "/models" }}
+              readOnly: {{ .Values.SharedModels.readOnly | default true }}
+{{- end }}
+{{- if .Values.SharedWritable.enabled }}
+            - name: shared-writable
+              mountPath: {{ .Values.SharedWritable.mountPath | default "/shared" }}
+              readOnly: {{ .Values.SharedWritable.readOnly | default false }}
+{{- end }}
+{{- if .Values.UseShm }}
+            - name: dshm
+              mountPath: /dev/shm
+{{- end }}
+{{- if .Values.UseEGL }}
+            - name: egl-libs
+              mountPath: /egl-libs
+              readOnly: true
+{{- end }}
+{{- with .Values.ExtraVolumeMounts }}
+{{ toYaml . | nindent 12 }}
+{{- end }}
+      volumes:
+{{- if .Values.Workspace.enabled }}
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: {{ include "xay-ai.workspaceClaimName" . }}
+{{- end }}
+{{- if .Values.Scratch.enabled }}
+        - name: scratch
+          persistentVolumeClaim:
+            claimName: {{ include "xay-ai.scratchClaimName" . }}
+{{- end }}
+{{- if .Values.SharedModels.enabled }}
+        - name: shared-models
+          persistentVolumeClaim:
+            claimName: {{ .Values.SharedModels.claimName }}
+{{- end }}
+{{- if .Values.SharedWritable.enabled }}
+        - name: shared-writable
+          persistentVolumeClaim:
+            claimName: {{ .Values.SharedWritable.claimName }}
+{{- end }}
+{{- if .Values.UseShm }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.ShmSize | default "16Gi" }}
+{{- end }}
+{{- if .Values.UseEGL }}
+        - name: egl-libs
+          emptyDir:
+            sizeLimit: 200Mi
+{{- end }}
+{{- with .Values.ExtraVolumes }}
+{{ toYaml . | nindent 8 }}
+{{- end }}

@@ -1,0 +1,16 @@
+{{- if .Values.Scratch.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "xay-ai.scratchClaimName" . }}
+  namespace: {{ include "xay-ai.namespace" . }}
+  labels:
+{{ include "xay-ai.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.Scratch.size | default "100Gi" }}
+  storageClassName: {{ .Values.Scratch.storageClassName | default "local-path" | quote }}
+{{- end }}

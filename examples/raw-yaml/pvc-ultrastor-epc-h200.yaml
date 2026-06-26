@@ -1,0 +1,13 @@
+# 仅 H200 节点使用。5090 节点不支持 h3c-csi-sc-epc。
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workspace-epc-h200
+  namespace: your-namespace
+spec:
+  storageClassName: h3c-csi-sc-epc
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi

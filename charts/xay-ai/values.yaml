@@ -1,0 +1,112 @@
+# xay-ai 默认配置。建议复制到自己的 values 文件后修改。
+
+# 必填：个人 namespace，通常从华清云 SaaS 查看。
+NameSpace: ""
+
+# 任务基础名称，用于生成 Deployment、Service、PVC 等资源名。
+BaseName: ai-workload
+
+# 容器镜像。建议使用 harbor.xa.hqzyai.com:19443 下的个人或项目镜像。
+ContainerImage: harbor.xa.hqzyai.com:19443/library/pytorch:latest
+ImagePullPolicy: IfNotPresent
+
+# GPU 类型。当前支持 5090、H200；后续 B300 到位后可扩展。
+# 5090 仅支持 h3c-csi-sc-nfs；H200 支持 h3c-csi-sc-nfs 和 h3c-csi-sc-epc。
+GPU: H200
+
+Replicas: 1
+
+# 可选：覆盖自动生成名称。
+# DeployName: ""
+# Label: ""
+# ContainerName: ""
+
+# 可选：容器运行用户。默认 root，适配多数 AI 镜像。
+UID: 0
+GID: 0
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 1
+
+# 共享内存，常用于 PyTorch DataLoader、Ray、浏览器渲染等场景。
+UseShm: true
+ShmSize: 16Gi
+
+# 使用 NVIDIA EGL 相关库。需要镜像和节点环境支持。
+UseEGL: false
+EGLImage: harbor.xa.hqzyai.com:19443/infra/nvidia-egl-libs:latest
+
+# 自定义启动命令。留空时容器常驻。
+# Command: '["bash", "-lc", "--"]'
+# Args: '["python /workspace/train.py"]'
+Command: ""
+Args: ""
+
+# 临时 scratch PVC。删除 Helm release 时会删除该 PVC。
+Scratch:
+  enabled: true
+  storageClassName: local-path
+  size: 100Gi
+  mountPath: /scratch
+
+# 工作目录 PVC。可选择复用已有 PVC，或由 Chart 创建新 PVC。
+Workspace:
+  enabled: true
+  create: true
+  claimName: ""
+  storageClassName: h3c-csi-sc-epc
+  size: 200Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+# 公共模型权重。默认不开启；仅在平台已提供公共模型 PVC 并告知 claimName 后启用。
+# Chart 不会自动创建公共模型 PVC。
+SharedModels:
+  enabled: false
+  claimName: ""
+  mountPath: /models
+  readOnly: true
+
+# 公共读写共享目录。默认关闭；仅复用平台已提供的公共读写 PVC。
+# 启用前需确认权限、配额、文件属主、并发写入和回收策略。
+SharedWritable:
+  enabled: false
+  claimName: ""
+  mountPath: /shared
+  readOnly: false
+
+Service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 22
+
+# 兼容旧配置：如果只需要额外暴露一个 Web 端口，可直接设置 ExtraPort。
+# ExtraPort: 7860
+ExtraPort: 0
+
+# Gateway API HTTPRoute。域名需按平台规则申请。
+HTTPRoute:
+  enabled: false
+  host: ""
+  parentRef:
+    name: yunwang-public
+    namespace: envoy-gateway-system
+    sectionName: https-wildcard-8443
+  servicePort: 7860
+  pathPrefix: /
+
+# 额外调度配置。
+NodeSelector: {}
+Tolerations: []
+Affinity: {}
+
+ExtraEnv: []
+ExtraVolumeMounts: []
+ExtraVolumes: []

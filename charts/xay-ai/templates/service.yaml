@@ -1,0 +1,26 @@
+{{- if .Values.Service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "xay-ai.fullname" . }}
+  namespace: {{ include "xay-ai.namespace" . }}
+  labels:
+{{ include "xay-ai.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.Service.type | default "ClusterIP" }}
+  selector:
+{{ include "xay-ai.selectorLabels" . | nindent 4 }}
+  ports:
+{{- range .Values.Service.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: TCP
+{{- end }}
+{{- if .Values.ExtraPort }}
+    - name: extra
+      port: {{ .Values.ExtraPort }}
+      targetPort: {{ .Values.ExtraPort }}
+      protocol: TCP
+{{- end }}
+{{- end }}

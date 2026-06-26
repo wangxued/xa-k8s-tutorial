@@ -1,0 +1,37 @@
+NameSpace: your-namespace
+BaseName: web-demo
+ContainerImage: harbor.xa.hqzyai.com:19443/your-project/web-demo:tag
+GPU: H200
+
+Limits:
+  CPU: "4"
+  memory: 16Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 8Gi
+
+Workspace:
+  enabled: true
+  create: true
+  storageClassName: h3c-csi-sc-nfs
+  size: 100Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+ExtraPort: 7860
+
+HTTPRoute:
+  enabled: true
+  host: demo.xa.hqzyai.com
+  parentRef:
+    name: yunwang-public
+    namespace: envoy-gateway-system
+    sectionName: https-wildcard-8443
+  servicePort: 7860
+  pathPrefix: /
+
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && python app.py --host 0.0.0.0 --port 7860"]'

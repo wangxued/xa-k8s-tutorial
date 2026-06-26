@@ -1,0 +1,27 @@
+{{- if .Values.HTTPRoute.enabled }}
+{{- if not .Values.HTTPRoute.host -}}
+{{- fail "HTTPRoute.host is required when HTTPRoute.enabled is true." -}}
+{{- end -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "xay-ai.fullname" . }}
+  namespace: {{ include "xay-ai.namespace" . }}
+  labels:
+{{ include "xay-ai.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ .Values.HTTPRoute.parentRef.name }}
+      namespace: {{ .Values.HTTPRoute.parentRef.namespace }}
+      sectionName: {{ .Values.HTTPRoute.parentRef.sectionName }}
+  hostnames:
+    - {{ .Values.HTTPRoute.host | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ .Values.HTTPRoute.pathPrefix | default "/" | quote }}
+      backendRefs:
+        - name: {{ include "xay-ai.fullname" . }}
+          port: {{ .Values.HTTPRoute.servicePort | default .Values.ExtraPort }}
+{{- end }}

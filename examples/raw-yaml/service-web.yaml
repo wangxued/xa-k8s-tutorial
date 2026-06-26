@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-workload-web
+  namespace: your-namespace
+  labels:
+    app: ai-workload
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-workload
+  ports:
+    - name: http
+      port: 7860
+      targetPort: 7860
+      protocol: TCP

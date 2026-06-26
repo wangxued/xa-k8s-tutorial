@@ -1,0 +1,20 @@
+{{- $gpuType := toString (.Values.GPU | default "") -}}
+{{- if and (eq $gpuType "5090") .Values.Workspace.enabled (eq .Values.Workspace.storageClassName "h3c-csi-sc-epc") -}}
+{{- fail "5090 nodes only support h3c-csi-sc-nfs. Change Workspace.storageClassName to h3c-csi-sc-nfs." -}}
+{{- end -}}
+{{- if and .Values.Workspace.enabled .Values.Workspace.create }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "xay-ai.workspaceClaimName" . }}
+  namespace: {{ include "xay-ai.namespace" . }}
+  labels:
+{{ include "xay-ai.labels" . | nindent 4 }}
+spec:
+  accessModes:
+{{ toYaml .Values.Workspace.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.Workspace.size | default "200Gi" }}
+  storageClassName: {{ .Values.Workspace.storageClassName | quote }}
+{{- end }}

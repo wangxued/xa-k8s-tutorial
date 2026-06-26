@@ -1,0 +1,32 @@
+NameSpace: your-namespace
+BaseName: train-h200-nfs
+ContainerImage: harbor.xa.hqzyai.com:19443/your-project/your-image:tag
+GPU: H200
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 16Gi
+
+Scratch:
+  enabled: true
+  storageClassName: local-path
+  size: 100Gi
+  mountPath: /scratch
+
+Workspace:
+  enabled: true
+  create: true
+  claimName: ""
+  storageClassName: h3c-csi-sc-nfs
+  size: 200Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && while true; do sleep 3600; done"]'
