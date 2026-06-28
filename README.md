@@ -55,6 +55,45 @@ helm upgrade --install my-task ./charts/xay-ai \
 
 详细参数见 [`charts/xay-ai/README.md`](charts/xay-ai/README.md)。Harbor 镜像与个人项目说明见 [`docs/harbor-images.md`](docs/harbor-images.md)。
 
+## 单机开发 vs 多机训练
+
+| 场景 | Chart | 资源类型 |
+|------|-------|----------|
+| SSH 进容器写代码、单机调试、Jupyter、长期占 1～8 卡 | [`xay-ai`](charts/xay-ai/) | **Deployment** |
+| 跨多台 GPU 节点跑 `torchrun` / DeepSpeed | [`xay-ai-dist-train`](charts/xay-ai-dist-train/) | **Indexed Job** |
+
+完整对照（gpu-gc 回收、`ttlSecondsAfterFinished`、训练完成后如何复用 PVC 数据）见 **[GPU 工作负载场景选型](docs/gpu-workload-scenarios.md)**。
+
+## 多机多卡训练（传送门）
+
+单机 1~8 卡开发/训练继续使用 [`xay-ai`](charts/xay-ai/)。**跨多台 GPU 节点的分布式训练**（PyTorch `torchrun`、DeepSpeed 等）请使用专用 Job 方案：
+
+| 入口 | 说明 |
+|------|------|
+| **[GPU 工作负载场景选型](docs/gpu-workload-scenarios.md)** | **单机 Deployment vs 多机 Job**、TTL、Completed 后数据复用 |
+| **[多机多卡训练使用说明](docs/multinode-gpu-training.md)** | 原理、Headless Service 说明、H200/5090/混合场景、排障 |
+| [`charts/xay-ai-dist-train/`](charts/xay-ai-dist-train/) | 多机多卡 Helm Chart（Indexed Job + Headless Service） |
+| [`examples/helm/values-dist-train-h200-2x2.yaml`](examples/helm/values-dist-train-h200-2x2.yaml) | 2×H200×2 卡（4 卡，推荐起步） |
+| [`examples/helm/values-dist-train-5090-2x2.yaml`](examples/helm/values-dist-train-5090-2x2.yaml) | 2×5090×2 卡（4 卡，推荐起步） |
+| [`examples/helm/values-dist-train-h200-2x8.yaml`](examples/helm/values-dist-train-h200-2x8.yaml) | 2×H200×8 卡（16 卡，需 quota≥16） |
+| [`examples/helm/values-dist-train-5090-2x8.yaml`](examples/helm/values-dist-train-5090-2x8.yaml) | 2×5090×8 卡（16 卡，需 quota≥16） |
+| [`examples/raw-yaml/job-multinode-h200-2nodes-8gpu.yaml`](examples/raw-yaml/job-multinode-h200-2nodes-8gpu.yaml) | H200 原生 YAML |
+| [`examples/raw-yaml/job-multinode-5090-2nodes-8gpu.yaml`](examples/raw-yaml/job-multinode-5090-2nodes-8gpu.yaml) | 5090 原生 YAML |
+| [`examples/raw-yaml/job-multinode-h200-5090-separate.yaml`](examples/raw-yaml/job-multinode-h200-5090-separate.yaml) | H200 + 5090 分阶段（两个独立 Job） |
+
+快速部署：
+
+```bash
+cp examples/helm/values-dist-train-h200-2x2.yaml values-my-dist-train.yaml
+vi values-my-dist-train.yaml
+
+helm upgrade --install my-dist-train ./charts/xay-ai-dist-train \
+  -n your-namespace \
+  -f values-my-dist-train.yaml
+```
+
+> **说明**：多机训练需要集群内 **Headless Service** 做节点 DNS 发现（`MASTER_ADDR`），与 SSH/Web 用的 ClusterIP Service 不同。详见 [多机多卡训练使用说明 — 训练中是否需要 Service？](docs/multinode-gpu-training.md#2-训练中是否需要-service)。
+
 ## 存储选择
 
 | 场景 | 推荐方式 | 说明 |
@@ -78,14 +117,17 @@ StorageClass 支持矩阵：
 | [`charts/xay-ai/README.md`](charts/xay-ai/README.md) | Helm Chart 参数、GPU/StorageClass、PVC、共享内存、HTTPRoute 配置 |
 | [`docs/harbor-images.md`](docs/harbor-images.md) | Harbor 地址、个人项目、登录 push/pull、在 K8s 中使用 |
 | [`docs/web-httproute-guide.md`](docs/web-httproute-guide.md) | Web 服务外部域名、HTTPRoute、`https://<域名>:9443/` 访问说明 |
+| [`docs/gpu-workload-scenarios.md`](docs/gpu-workload-scenarios.md) | **单机 vs 多机选型**、Job TTL、训练完成后数据复用 |
+| [`docs/multinode-gpu-training.md`](docs/multinode-gpu-training.md) | **多机多卡训练**：Job、Headless Service、H200/5090 场景 |
+| [`charts/xay-ai-dist-train/README.md`](charts/xay-ai-dist-train/README.md) | 多机多卡 Helm Chart 参数 |
 | [`examples/README.md`](examples/README.md) | Helm values 和原生 YAML 示例说明 |
 
 ## 示例入口
 
 | 目录 | 内容 |
 |------|------|
-| [`examples/helm/`](examples/helm/) | `xay-ai` Chart values 示例：5090+NFS、H200+NFS、H200+EPC、Web HTTPRoute、公共模型挂载 |
-| [`examples/raw-yaml/`](examples/raw-yaml/) | 不使用 Helm 时可参考的 PVC、Deployment、Service、HTTPRoute YAML |
+| [`examples/helm/`](examples/helm/) | `xay-ai` / `xay-ai-dist-train` values：5090+NFS、H200+EPC、多机多卡、Web HTTPRoute |
+| [`examples/raw-yaml/`](examples/raw-yaml/) | PVC、Deployment、多机 Job、HTTPRoute 等原生 YAML |
 
 ## 常用命令
 

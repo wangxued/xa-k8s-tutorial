@@ -1,0 +1,62 @@
+# xay-ai-dist-train 默认配置。建议复制到 examples/helm/ 下的 values 文件后修改。
+
+NameSpace: ""
+BaseName: dist-train
+
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+ImagePullPolicy: IfNotPresent
+
+# GPU 类型：5090 或 H200。5090 仅支持 h3c-csi-sc-nfs。
+GPU: H200
+
+UID: 0
+GID: 0
+
+Limits:
+  CPU: "32"
+  memory: 128Gi
+  GPU: 8
+
+UseShm: true
+ShmSize: 16Gi
+
+# 多机多卡参数
+Distributed:
+  nodes: 2
+  masterPort: 29500
+  trainScript: /workspace/train.py
+  spreadAcrossNodes: true
+
+# Headless Service：多机 torchrun 节点发现（MASTER_ADDR DNS）所需，训练场景请保持 enabled。
+HeadlessService:
+  enabled: true
+
+backoffLimit: 0
+# Job 完成后保留 24h 再自动删除 Job/Pod（释放 GPU）；共享 PVC 不受影响
+ttlSecondsAfterFinished: 86400
+
+Workspace:
+  enabled: true
+  create: true
+  claimName: ""
+  storageClassName: h3c-csi-sc-epc
+  size: 500Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+# 留空时使用 torchrun 默认启动；自定义时覆盖 Command/Args。
+Command: ""
+Args: ""
+
+ExtraEnv: []
+# - name: NCCL_DEBUG
+#   value: INFO
+
+NodeSelector: {}
+Tolerations: []
+Affinity: {}
+
+ExtraVolumeMounts: []
+ExtraVolumes: []

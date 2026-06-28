@@ -1,0 +1,17 @@
+{{- if .Values.HeadlessService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "xay-ai-dist-train.fullname" . }}
+  namespace: {{ include "xay-ai-dist-train.namespace" . }}
+  labels:
+{{ include "xay-ai-dist-train.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    job-name: {{ include "xay-ai-dist-train.fullname" . }}
+  ports:
+    - name: nccl
+      port: {{ .Values.Distributed.masterPort | default 29500 }}
+      targetPort: {{ .Values.Distributed.masterPort | default 29500 }}
+{{- end }}

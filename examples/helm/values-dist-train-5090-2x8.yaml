@@ -1,0 +1,47 @@
+# 2 节点 × 8 卡 RTX 5090 分布式训练（共 16 卡）
+NameSpace: your-namespace
+BaseName: dist-5090-2x8
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+GPU: "5090"
+
+Limits:
+  CPU: "16"
+  memory: 64Gi
+  GPU: 8
+
+Distributed:
+  nodes: 2
+  masterPort: 29500
+  trainScript: /workspace/train.py
+
+HeadlessService:
+  enabled: true
+
+UseShm: true
+ShmSize: 16Gi
+
+Workspace:
+  enabled: true
+  create: true
+  storageClassName: h3c-csi-sc-nfs
+  size: 500Gi
+  mountPath: /workspace
+
+# Job 完成后 24h 自动删除 Job/Pod（释放 GPU）；checkpoint 请写入 /workspace
+ttlSecondsAfterFinished: 86400
+
+ExtraEnv:
+  - name: NCCL_DEBUG
+    value: INFO
+
+# 若需排除仅 6 卡可调的 yw-gpu-18，可取消注释：
+# NodeSelector: {}
+# Affinity:
+#   nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#         - matchExpressions:
+#             - key: kubernetes.io/hostname
+#               operator: NotIn
+#               values:
+#                 - yw-gpu-18

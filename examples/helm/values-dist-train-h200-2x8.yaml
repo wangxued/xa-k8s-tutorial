@@ -1,0 +1,39 @@
+# 2 节点 × 8 卡 H200 分布式训练（共 16 卡）
+NameSpace: your-namespace
+BaseName: dist-h200-2x8
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+GPU: H200
+
+Limits:
+  CPU: "32"
+  memory: 128Gi
+  GPU: 8
+
+Distributed:
+  nodes: 2
+  masterPort: 29500
+  trainScript: /workspace/train.py
+
+HeadlessService:
+  enabled: true
+
+UseShm: true
+ShmSize: 16Gi
+
+Workspace:
+  enabled: true
+  create: true
+  storageClassName: h3c-csi-sc-epc
+  size: 500Gi
+  mountPath: /workspace
+
+# Job 完成后 24h 自动删除 Job/Pod（释放 GPU）；checkpoint 请写入 /workspace
+ttlSecondsAfterFinished: 86400
+
+ExtraEnv:
+  - name: NCCL_DEBUG
+    value: INFO
+
+# 自定义训练命令示例（启用后覆盖默认 torchrun）：
+# Command: '["bash", "-lc", "--"]'
+# Args: '["python /workspace/train.py"]'

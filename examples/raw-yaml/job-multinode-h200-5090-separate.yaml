@@ -1,0 +1,181 @@
+# H200 与 5090 分阶段训练 — 两个独立 Job，勿在同一 NCCL 任务中混用 GPU 型号
+#
+# 阶段 1：H200 预训练/蒸馏（EPC）
+# 阶段 2：5090 微调（NFS，读取阶段 1 导出的权重）
+# 说明：docs/multinode-gpu-training.md
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pipeline-shared-epc
+  namespace: your-namespace
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: h3c-csi-sc-epc
+  resources:
+    requests:
+      storage: 1Ti
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pipeline-shared-nfs
+  namespace: your-namespace
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: h3c-csi-sc-nfs
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: distill-h200
+  namespace: your-namespace
+spec:
+  clusterIP: None
+  selector:
+    job-name: distill-h200
+  ports:
+    - name: nccl
+      port: 29500
+      targetPort: 29500
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: distill-h200
+  namespace: your-namespace
+spec:
+  completionMode: Indexed
+  completions: 2
+  parallelism: 2
+  backoffLimit: 0
+  # 完成后保留 24h 再删除 Job/Pod；共享 PVC 不受影响
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: distill-h200
+    spec:
+      subdomain: distill-h200
+      restartPolicy: Never
+      nodeSelector:
+        gpu-type: H200
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - distill-h200
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: trainer
+          image: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+          resources:
+            limits:
+              nvidia.com/gpu: "8"
+          env:
+            - name: MASTER_ADDR
+              value: distill-h200-0.distill-h200
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              exec torchrun \
+                --nnodes=2 --nproc_per_node=8 \
+                --node_rank="${JOB_COMPLETION_INDEX:-0}" \
+                --master_addr="${MASTER_ADDR}" --master_port=29500 \
+                /workspace/stage1_train.py
+          volumeMounts:
+            - name: shared
+              mountPath: /workspace
+      volumes:
+        - name: shared
+          persistentVolumeClaim:
+            claimName: pipeline-shared-epc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finetune-5090
+  namespace: your-namespace
+spec:
+  clusterIP: None
+  selector:
+    job-name: finetune-5090
+  ports:
+    - name: nccl
+      port: 29500
+      targetPort: 29500
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: finetune-5090
+  namespace: your-namespace
+spec:
+  completionMode: Indexed
+  completions: 2
+  parallelism: 2
+  backoffLimit: 0
+  # 完成后保留 24h 再删除 Job/Pod；共享 PVC 不受影响
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: finetune-5090
+    spec:
+      subdomain: finetune-5090
+      restartPolicy: Never
+      nodeSelector:
+        gpu-type: "5090"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - finetune-5090
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: trainer
+          image: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+          resources:
+            limits:
+              nvidia.com/gpu: "4"
+          env:
+            - name: MASTER_ADDR
+              value: finetune-5090-0.finetune-5090
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              exec torchrun \
+                --nnodes=2 --nproc_per_node=4 \
+                --node_rank="${JOB_COMPLETION_INDEX:-0}" \
+                --master_addr="${MASTER_ADDR}" --master_port=29500 \
+                /workspace/stage2_finetune.py
+          volumeMounts:
+            - name: shared
+              mountPath: /workspace
+      volumes:
+        - name: shared
+          persistentVolumeClaim:
+            claimName: pipeline-shared-nfs

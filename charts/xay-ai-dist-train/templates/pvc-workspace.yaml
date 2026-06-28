@@ -1,0 +1,16 @@
+{{- if and .Values.Workspace.enabled .Values.Workspace.create }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "xay-ai-dist-train.workspaceClaimName" . }}
+  namespace: {{ include "xay-ai-dist-train.namespace" . }}
+  labels:
+{{ include "xay-ai-dist-train.labels" . | nindent 4 }}
+spec:
+  accessModes:
+{{ toYaml (.Values.Workspace.accessModes | default (list "ReadWriteMany")) | nindent 4 }}
+  storageClassName: {{ .Values.Workspace.storageClassName | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.Workspace.size | quote }}
+{{- end }}

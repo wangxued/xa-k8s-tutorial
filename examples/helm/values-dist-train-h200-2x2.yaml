@@ -1,0 +1,31 @@
+# 2 节点 × 2 卡 H200 分布式训练（共 4 卡，适合 namespace quota 较紧时起步）
+NameSpace: your-namespace
+BaseName: dist-h200-2x2
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+GPU: H200
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 2
+
+Distributed:
+  nodes: 2
+  masterPort: 29500
+  trainScript: /workspace/train.py
+
+HeadlessService:
+  enabled: true
+
+UseShm: true
+ShmSize: 8Gi
+
+Workspace:
+  enabled: true
+  create: true
+  storageClassName: h3c-csi-sc-epc
+  size: 50Gi
+  mountPath: /workspace
+
+# Job 完成后 24h 自动删除 Job/Pod（释放 GPU）；checkpoint 请写入 /workspace
+ttlSecondsAfterFinished: 86400

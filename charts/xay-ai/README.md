@@ -2,6 +2,8 @@
 
 `xay-ai` 用于在雄安院 K8s 集群的个人 namespace 中部署 AI 训练、推理、Notebook 或 Web 服务工作负载。
 
+> **场景选型**：交互式单机开发、SSH 常驻任务使用本 Chart（**Deployment**）。跨多台 GPU 节点的 `torchrun` / DeepSpeed 分布式训练请使用 [`xay-ai-dist-train`](../xay-ai-dist-train/)（**Job**）。对照说明见 [`docs/gpu-workload-scenarios.md`](../../docs/gpu-workload-scenarios.md)。
+
 Chart 会创建：
 
 - `Deployment`：实际运行的容器任务。

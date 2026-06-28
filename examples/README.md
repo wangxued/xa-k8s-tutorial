@@ -2,8 +2,10 @@
 
 本目录包含两类示例：
 
-- [`helm/`](helm/)：配合 `charts/xay-ai` 使用的 values 文件。
+- [`helm/`](helm/)：配合 `charts/xay-ai` 或 `charts/xay-ai-dist-train` 使用的 values 文件。
 - [`raw-yaml/`](raw-yaml/)：不使用 Helm 时可参考的原生 Kubernetes YAML。
+
+多机多卡训练总览见 [`../docs/multinode-gpu-training.md`](../docs/multinode-gpu-training.md)。**单机 Deployment vs 多机 Job**、TTL、Completed 后数据复用见 [`../docs/gpu-workload-scenarios.md`](../docs/gpu-workload-scenarios.md)。
 
 ## Helm values
 
@@ -14,6 +16,10 @@
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
 | `values-web-httproute.yaml` | 需要通过 HTTPRoute 暴露 Web 服务 |
 | `values-shared-models.yaml` | 只读挂载公共模型权重 |
+| `values-dist-train-h200-2x2.yaml` | **多机多卡**：2×H200×2 卡（推荐起步） |
+| `values-dist-train-5090-2x2.yaml` | **多机多卡**：2×5090×2 卡（推荐起步） |
+| `values-dist-train-h200-2x8.yaml` | **多机多卡**：2×H200×8 卡（占满 16 卡 quota） |
+| `values-dist-train-5090-2x8.yaml` | **多机多卡**：2×5090×8 卡（占满 16 卡 quota） |
 
 默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。
 
@@ -34,13 +40,24 @@ helm upgrade --install my-task ./charts/xay-ai \
   -f examples/helm/values-h200-epc.yaml
 ```
 
+多机多卡训练（Indexed Job）：
+
+```bash
+helm upgrade --install my-dist-train ./charts/xay-ai-dist-train \
+  -n your-namespace \
+  -f examples/helm/values-dist-train-h200-2x2.yaml
+```
+
 ## 原生 YAML
 
 | 文件 | 说明 |
 |------|------|
 | `pvc-ultrastor-nfs.yaml` | NFS 共享 PVC |
 | `pvc-ultrastor-epc-h200.yaml` | H200 可用的 EPC 共享 PVC |
-| `deployment-gpu-workload.yaml` | GPU Deployment 示例 |
+| `deployment-gpu-workload.yaml` | GPU Deployment 示例（单机） |
+| `job-multinode-h200-2nodes-8gpu.yaml` | 多机多卡 H200 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
+| `job-multinode-5090-2nodes-8gpu.yaml` | 多机多卡 5090 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
+| `job-multinode-h200-5090-separate.yaml` | H200 / 5090 分阶段两个独立 Job（含 TTL） |
 | `service-web.yaml` | Web Service 示例 |
 | `httproute-web.yaml` | Gateway API HTTPRoute 示例 |
 
