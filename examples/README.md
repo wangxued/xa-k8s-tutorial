@@ -59,6 +59,7 @@ helm upgrade --install my-dist-train ./charts/xay-ai-dist-train \
 | `job-multinode-h200-2nodes-8gpu.yaml` | 多机多卡 H200 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
 | `job-multinode-5090-2nodes-8gpu.yaml` | 多机多卡 5090 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
 | `job-multinode-h200-5090-separate.yaml` | H200 / 5090 分阶段两个独立 Job（含 TTL） |
+| `minio-client-pod.yaml` | 临时 MinIO 客户端 Pod（data-export 上传/下载） |
 | `service-web.yaml` | Web Service 示例 |
 | `httproute-web.yaml` | Gateway API HTTPRoute 示例 |
 
@@ -71,3 +72,7 @@ Web 服务外部访问配置详见 [`../docs/web-httproute-guide.md`](../docs/we
 - 5090 节点仅支持 `h3c-csi-sc-nfs`。
 - H200 节点支持 `h3c-csi-sc-nfs` 和 `h3c-csi-sc-epc`。
 - 不要将 `h3c-csi-sc-epc` 用于 5090 节点。
+
+## MinIO 中转脚本
+
+[`../scripts/minio/`](../scripts/minio/) 提供 Pod/本机双向上传下载脚本，用法见 [`../docs/data-export-minio-usage.md`](../docs/data-export-minio-usage.md)。
