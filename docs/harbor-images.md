@@ -1,6 +1,6 @@
 # Harbor 镜像使用说明
 
-云网 K8s 集群从雄安 Harbor 拉取镜像。Harbor 地址与个人账号见华清云 SaaS。
+新 K8s 集群从雄安 Harbor 拉取镜像。Harbor 地址与个人账号见华清云 SaaS。
 
 | 项 | 值 |
 |----|-----|

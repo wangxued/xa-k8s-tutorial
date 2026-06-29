@@ -1,0 +1,28 @@
+# 临时 MinIO 客户端 Pod（data-export 上传）
+# 用法：kubectl apply -f minio-client-pod.yaml -n <your-namespace>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: minio-client
+  namespace: your-namespace
+spec:
+  restartPolicy: Never
+  containers:
+    - name: mc-client
+      image: harbor.hqzyai.com/quay-proxy/minio/mc:RELEASE.2025-08-13T08-35-41Z
+      imagePullPolicy: IfNotPresent
+      command: ["sleep", "infinity"]
+      env:
+        - name: MINIO_ENDPOINT
+          value: http://data-minio-hl.data-export-minio.svc.cluster.local:9000
+        - name: MINIO_BUCKET
+          value: export
+        - name: NO_PROXY
+          value: localhost,127.0.0.1,.svc,.svc.cluster.local,.cluster.local,10.96.0.0/12,10.63.252.0/24,10.60.0.0/24
+      resources:
+        requests:
+          cpu: 500m
+          memory: 500Mi
+        limits:
+          cpu: 1500m
+          memory: 2Gi
