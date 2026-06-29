@@ -1,0 +1,96 @@
+# 单机 8 卡 H200 + EGL 渲染任务（预留节点 yw-gpu-33）
+#
+# 适用场景：图形渲染、仿真、需要 NVIDIA EGL 库的 GPU 任务；占满单台 H200 节点全部 8 卡。
+# 平台侧需已为 yw-gpu-33 打上预留污点 yunwang.hqzyai.com/reserved=egl-rendering:NoSchedule。
+#
+# 部署前必填：
+#   - NameSpace：与 helm -n <namespace> 一致
+#   - ContainerImage：渲染/仿真业务镜像（push 至个人 Harbor 项目后替换）
+#   - Command / Args：实际启动命令（下方为常驻占位，便于先部署再 exec 调试）
+#
+# 部署示例：
+#   helm upgrade --install my-egl ./charts/xay-ai \
+#     -n your-namespace \
+#     -f examples/helm/values-egl-8-h200.yaml
+
+NameSpace: your-namespace
+BaseName: egl-h200-8gpu
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+ImagePullPolicy: IfNotPresent
+GPU: H200
+
+Replicas: 1
+
+# 占满整节点 8 卡时须 Recreate，避免 RollingUpdate 因 GPU 不足卡住。
+Strategy:
+  type: Recreate
+
+Limits:
+  CPU: "32"
+  memory: 128Gi
+  GPU: 8
+
+# EGL 渲染：Chart 会注入 nvidia-egl-libs 并设置 graphics 相关环境变量。
+UseEGL: true
+EGLImage: harbor.xa.hqzyai.com:19443/infra/nvidia-egl-libs:latest
+
+# 渲染/多进程场景建议较大共享内存。
+UseShm: true
+ShmSize: 32Gi
+
+# 占位启动命令；替换为实际渲染入口，例如：
+# Command: '["bash", "-lc", "--"]'
+# Args: '["cd /workspace && python render.py"]'
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && while true; do sleep 3600; done"]'
+
+Scratch:
+  enabled: true
+  storageClassName: local-path
+  size: 200Gi
+  mountPath: /scratch
+
+Workspace:
+  enabled: true
+  create: true
+  claimName: ""
+  storageClassName: h3c-csi-sc-epc
+  size: 500Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+Service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 22
+
+# 若需 Web 预览，取消注释并申请 HTTPRoute 域名（见 values-web-httproute.yaml）。
+# ExtraPort: 7860
+ExtraPort: 0
+
+HTTPRoute:
+  enabled: false
+  host: ""
+  parentRef:
+    name: yunwang-public
+    namespace: envoy-gateway-system
+    sectionName: https-wildcard-8443
+  servicePort: 7860
+  pathPrefix: /
+
+# 固定调度至平台预留的 EGL 渲染节点（须与平台侧预留污点配套）。
+NodeSelector:
+  kubernetes.io/hostname: yw-gpu-33
+
+Tolerations:
+  - key: yunwang.hqzyai.com/reserved
+    operator: Equal
+    value: egl-rendering
+    effect: NoSchedule
+
+# nvidia.com/gpu=true:NoSchedule 由 Chart 在 Limits.GPU > 0 时自动注入，无需重复填写。

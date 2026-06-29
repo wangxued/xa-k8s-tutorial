@@ -14,6 +14,7 @@
 | `values-5090-nfs.yaml` | 5090 节点，使用 `h3c-csi-sc-nfs` |
 | `values-h200-nfs.yaml` | H200 节点，使用 `h3c-csi-sc-nfs` |
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
+| `values-egl-8-h200.yaml` | **单机 8 卡 H200 + EGL 渲染**（预留节点 `yw-gpu-33`） |
 | `values-web-httproute.yaml` | 需要通过 HTTPRoute 暴露 Web 服务 |
 | `values-shared-models.yaml` | 只读挂载公共模型权重 |
 | `values-dist-train-h200-2x2.yaml` | **多机多卡**：2×H200×2 卡（推荐起步） |
