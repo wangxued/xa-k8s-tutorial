@@ -45,6 +45,47 @@ export AWS_SECRET_ACCESS_KEY='...'
 
 使用前设置 `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`（见上文）。
 
+**`mc cp` 与 `mc mirror` 区别**（详见 [`docs/mc-command-cheatsheet.md`](../docs/mc-command-cheatsheet.md)）：
+
+| 命令 | 文件 | 目录 |
+|------|------|------|
+| `mc cp` | ✅ 直接支持 | ✅ 须加 `--recursive` |
+| `mc mirror --retry` | ❌ 不支持 | ✅ 目录同步（推荐批量） |
+
+---
+
+## mc 命令速查
+
+以下 `<别名>` / `<endpoint>` 在 **Pod 内** 用集群内 HTTP，在 **办公网本机** 用公网 HTTPS（见 [入口信息](#入口信息)）。配置 alias 后：
+
+```bash
+# Pod 内
+mc alias set data-minio http://data-minio-hl.data-export-minio.svc.cluster.local:9000 \
+  "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+
+# 办公网本机
+mc alias set data-minio https://minio-data.xa.hqzyai.com:9443 \
+  "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+```
+
+### 上传
+
+| 对象 | 命令 |
+|------|------|
+| **单个文件** | `mc cp /path/to/file.bin data-minio/export/<用户名>/<任务名>/file.bin` |
+| **整个目录** | `mc cp --recursive /path/to/dir/ data-minio/export/<用户名>/<任务名>/` |
+| **整个目录（推荐批量）** | `mc mirror --retry /path/to/dir/ data-minio/export/<用户名>/<任务名>/` |
+
+### 下载
+
+| 对象 | 命令 |
+|------|------|
+| **单个文件** | `mc cp data-minio/export/<用户名>/<任务名>/file.bin ./downloads/file.bin` |
+| **整个目录** | `mc cp --recursive data-minio/export/<用户名>/<任务名>/ ./downloads/` |
+| **整个目录（推荐批量）** | `mc mirror --retry data-minio/export/<用户名>/<任务名>/ ./downloads/` |
+
+完整说明见 [`docs/mc-minio-cheatsheet.md`](mc-minio-cheatsheet.md)。
+
 ---
 
 ## 1. Pod 上传 → 办公网下载（导出结果）
@@ -63,12 +104,17 @@ sh scripts/minio/pod-upload-to-minio.sh /path/to/data <用户名>/<任务名>
 
 **方式 B：手动 mc**
 
-```bash
-export MINIO_ENDPOINT='http://data-minio-hl.data-export-minio.svc.cluster.local:9000'
-export NO_PROXY='localhost,127.0.0.1,.svc,.svc.cluster.local,.cluster.local,10.96.0.0/12,10.63.252.0/24,10.60.0.0/24'
+单文件：
 
-mc alias set data-minio "$MINIO_ENDPOINT" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
-mc cp --recursive /path/to/data data-minio/export/<用户名>/<任务名>/
+```bash
+mc cp /path/to/result.tar.gz data-minio/export/<用户名>/<任务名>/result.tar.gz
+```
+
+整个目录（任选其一）：
+
+```bash
+mc cp --recursive /path/to/data/ data-minio/export/<用户名>/<任务名>/
+mc mirror --retry /path/to/data/ data-minio/export/<用户名>/<任务名>/
 ```
 
 集群内为 **HTTP**；公网经 Envoy Gateway **HTTPS :9443** 暴露。
@@ -88,6 +134,15 @@ export AWS_SECRET_ACCESS_KEY='<管理员发放>'
 bash scripts/minio/local-download-from-minio.sh <用户名>/<任务名> ./downloads
 ```
 
+手动 mc 示例：
+
+```bash
+# 单文件
+mc cp data-minio/export/<用户名>/<任务名>/result.tar.gz ./downloads/result.tar.gz
+# 整个目录（推荐 mirror）
+mc mirror --retry data-minio/export/<用户名>/<任务名>/ ./downloads/
+```
+
 目录下载使用 `mc mirror --retry`：已完整落盘且大小一致的文件会跳过，失败项自动重试。
 
 **断点续传说明**：单个大文件不支持字节级续传；中断后需重新下载该文件。目录批量下载时，`mirror --retry` 可跳过已完成的文件。
@@ -105,7 +160,14 @@ export AWS_SECRET_ACCESS_KEY='<管理员发放>'
 bash scripts/minio/local-upload-to-minio.sh ./dataset <用户名>/<任务名>-input
 ```
 
-单文件或整个目录均可；目录上传使用 `mc mirror --retry`。
+手动 mc 示例：
+
+```bash
+# 单文件
+mc cp ./weights.bin data-minio/export/<用户名>/<任务名>-input/weights.bin
+# 整个目录
+mc mirror --retry ./dataset/ data-minio/export/<用户名>/<任务名>-input/
+```
 
 ### 2.2 Pod 内下载
 
@@ -136,6 +198,10 @@ export NO_PROXY='localhost,127.0.0.1,.svc,.svc.cluster.local,.cluster.local,10.9
 
 mc alias set data-minio http://data-minio-hl.data-export-minio.svc.cluster.local:9000 \
   "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+
+# 单文件
+mc cp data-minio/export/<用户名>/<任务名>-input/weights.bin /workspace/input/weights.bin
+# 整个目录
 mc mirror --retry data-minio/export/<用户名>/<任务名>-input/ /workspace/input/
 ```
 
