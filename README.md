@@ -119,7 +119,7 @@ StorageClass 支持矩阵：
 | [`charts/xay-ai/README.md`](charts/xay-ai/README.md) | Helm Chart 参数、GPU/StorageClass、PVC、共享内存、HTTPRoute 配置 |
 | [`docs/harbor-images.md`](docs/harbor-images.md) | Harbor 地址、个人项目、登录 push/pull、在 K8s 中使用 |
 | [`docs/web-httproute-guide.md`](docs/web-httproute-guide.md) | Web 服务外部域名、HTTPRoute、`https://<域名>:9443/` 访问说明 |
-| [`docs/data-export-minio-usage.md`](docs/data-export-minio-usage.md) | **数据导出 MinIO**：Pod ↔ 办公网双向中转、脚本与 NFS/EPC 分工 |
+| [`docs/data-export-minio-usage.md`](docs/data-export-minio-usage.md) | **数据导出 MinIO**：Pod ↔ 办公网双向中转、联泰 GPFS 迁入示例、脚本 |
 | [`docs/mc-minio-cheatsheet.md`](docs/mc-minio-cheatsheet.md) | **mc 速查**：`cp` / `mirror` 上传下载单文件与目录 |
 | [`docs/gpu-workload-scenarios.md`](docs/gpu-workload-scenarios.md) | **单机 vs 多机选型**、Job TTL、训练完成后数据复用 |
 | [`docs/multinode-gpu-training.md`](docs/multinode-gpu-training.md) | **多机多卡训练**：Job、Headless Service、H200/5090 场景 |

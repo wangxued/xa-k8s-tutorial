@@ -56,7 +56,7 @@ export AWS_SECRET_ACCESS_KEY='...'
 
 ## mc 命令速查
 
-以下 `<别名>` / `<endpoint>` 在 **Pod 内** 用集群内 HTTP，在 **办公网本机** 用公网 HTTPS（见 [入口信息](#入口信息)）。配置 alias 后：
+以下 `<别名>` / `<endpoint>` 在 **新环境 Pod 内** 用集群内 HTTP，在 **办公网本机** 用公网 HTTPS（见 [入口信息](#入口信息)）。配置 alias 后：
 
 ```bash
 # Pod 内
@@ -117,7 +117,7 @@ mc cp --recursive /path/to/data/ data-minio/export/<用户名>/<任务名>/
 mc mirror --retry /path/to/data/ data-minio/export/<用户名>/<任务名>/
 ```
 
-集群内为 **HTTP**；公网经 Envoy Gateway **HTTPS :9443** 暴露。
+新集群内为 **HTTP**；公网经 Envoy Gateway **HTTPS :9443** 暴露。
 
 ### 1.2 本机下载
 
@@ -226,6 +226,84 @@ mc rm --recursive --force data-minio/export/<用户名>/<任务名>/
 | **集群 ↔ 办公网临时中转** | **data-export MinIO**（本文） |
 
 MinIO 中转面向「集群 ↔ 办公网」临时数据交换；集群内长期数据仍应使用个人 NFS/EPC PVC。详见 [GPU 工作负载场景选型](gpu-workload-scenarios.md)。
+
+## 5. 联泰 GPFS 历史数据迁入云网（已验证示例）
+
+适用于联泰集群个人 GPFS（如: `pvc-gpfshome-<用户>`）中的数据，经公网上传至云网 MinIO，再在云网 Pod 或办公网本机下载。
+
+| 项 | 值 |
+|---|---|
+| 示例 namespace | `changcan22` |
+| 示例 PVC | `pvc-gpfshome-changcan22` |
+| Pod 挂载路径 | `/gpfshome`（只读） |
+| 云网 MinIO 公网 | `https://minio-data.xa.hqzyai.com:9443` |
+| 建议远端前缀 | `export/changcan22/<任务名>/` |
+
+**示例 YAML**（2026-06 已验证）：
+
+| 文件 | 说明 |
+|------|------|
+| [`examples/raw-yaml/liantai-yunwang-minio-secret.example.yaml`](../examples/raw-yaml/liantai-yunwang-minio-secret.example.yaml) | 云网 MinIO 凭据 Secret 模板 |
+| [`examples/raw-yaml/liantai-changcan22-gpfshome-export-pod.yaml`](../examples/raw-yaml/liantai-changcan22-gpfshome-export-pod.yaml) | 挂载 GPFS PVC 的导出 Pod |
+
+部署顺序：先 Secret → 再 Pod → `kubectl exec` 进入浏览数据 → 确认路径后 `mc cp` / `mc mirror` 上传。
+
+### 5.1 Secret 模板：部署前须改字段
+
+文件：[`liantai-yunwang-minio-secret.example.yaml`](../examples/raw-yaml/liantai-yunwang-minio-secret.example.yaml)
+
+| YAML 路径 | 示例值 | 是否必改 | 说明 |
+|-----------|--------|----------|------|
+| `metadata.namespace` | `changcan22` | **是** | 须与个人 GPFS PVC 所在 namespace 一致 |
+| `metadata.name` | `yunwang-data-export-minio` | 否 | 与 Pod `envFrom.secretRef.name` 对应；一般保持默认 |
+| `stringData.AWS_ACCESS_KEY_ID` | 占位符 | **是** | 管理员发放的云网 **`data-export-user`** Access Key |
+| `stringData.AWS_SECRET_ACCESS_KEY` | 占位符 | **是** | 管理员发放的云网 **`data-export-user`** Secret Key |
+
+### 5.2 导出 Pod：部署前须改字段
+
+文件：[`liantai-changcan22-gpfshome-export-pod.yaml`](../examples/raw-yaml/liantai-changcan22-gpfshome-export-pod.yaml)
+
+| YAML 路径 | 示例值 | 是否必改 | 说明 |
+|-----------|--------|----------|------|
+| `metadata.namespace` | `changcan22` | **是** | 须与 Secret、GPFS PVC 同一 namespace |
+| `metadata.name` | `gpfshome-export-changcan22` | **建议** | 同一 namespace 内 Pod 名唯一；可按用户重命名 |
+| `metadata.labels.user` | `changcan22` | **建议** | 便于识别归属，与 namespace 或用户名对齐 |
+| `spec.nodeSelector.kubernetes.io/hostname` | `mg3232` | **否** | 示例已固定为 GPFS 可达节点；**请勿自行修改** |
+| `spec.volumes[].persistentVolumeClaim.claimName` | `pvc-gpfshome-changcan22` | **是** | 改为该用户实际的 GPFS PVC 名称（如: `pvc-gpfshome-<用户>`） |
+| `containers[].envFrom.secretRef.name` | `yunwang-data-export-minio` | 否 | 须与 §5.1 Secret 的 `metadata.name` 一致 |
+| `containers[].env`（`name: MINIO_REMOTE_PREFIX`） | `changcan22` | **是** | MinIO 对象前缀，对应 `export/<前缀>/<任务名>/` |
+| `containers[].env`（`name: MINIO_ENDPOINT`） | `https://minio-data.xa.hqzyai.com:9443` | 否 | 云网公网 S3 入口，固定 |
+| `containers[].env`（`name: MINIO_BUCKET`） | `export` | 否 | 中转 bucket，固定 |
+| `containers[].volumeMounts[].mountPath` | `/gpfshome` | 否 | Pod 内浏览与上传的本地路径，固定 |
+| `containers[].image` | `harbor.xa.xshixun.com:7443/.../mc:...` | 否 | 已验证 `mc` 镜像，固定 |
+
+### 5.3 部署、容器内上传
+
+部署方式:
+
+通过 `kubectl` 命令向新集群内部署
+
+```bash
+kubectl apply -f examples/raw-yaml/liantai-yunwang-minio-secret.yaml
+kubectl apply -f examples/raw-yaml/liantai-yourname-gpfshome-export-pod.yaml
+```
+
+Pod 内上传示例：
+
+```bash
+kubectl exec -it <your-pod-name> -n <your-namespace> -- sh
+
+mc alias set yunwang "$MINIO_ENDPOINT" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+mc mirror --retry /gpfshome/cc/ yunwang/export/changcan22/<任务名>/
+```
+
+**网络说明**：联泰 Pod 须**直连** `minio-data.xa.hqzyai.com:9443`；设置 `HTTP_PROXY` 会导致上传失败。
+
+上传完成后，可在云网集群 Pod 内用 §2.2 方式下载，或在办公网执行：
+
+```bash
+bash scripts/minio/local-download-from-minio.sh changcan22/<任务名> ./downloads
+```
 
 ## 注意事项
 

@@ -1,0 +1,77 @@
+# 联泰 GPFS home → 云网 MinIO 导出 Pod（已验证示例）
+#
+# 场景：在联泰集群挂载个人 GPFS home PVC，浏览数据后经公网上传到云网 data-export MinIO。
+# 部署前须改动的字段见 docs/data-export-minio-usage.md §5 表格。
+#
+# 部署顺序：
+#   1. 先 apply liantai-yunwang-minio-secret.example.yaml（填入管理员发放的云网凭据）
+#   2. 再 apply 本文件
+#   3. kubectl exec -it -n changcan22 gpfshome-export-changcan22 -- sh
+#
+# 上传（Pod 内，确认路径后）：
+#   mc alias set yunwang "$MINIO_ENDPOINT" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+#   mc cp /gpfshome/<文件> yunwang/export/changcan22/<任务名>/<文件名>
+#   mc mirror --retry /gpfshome/<目录>/ yunwang/export/changcan22/<任务名>/
+#
+# 说明：Pod 内直连 minio-data.xa.hqzyai.com:9443，勿设置 HTTP_PROXY。
+# 详见 docs/data-export-minio-usage.md §5
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpfshome-export-changcan22
+  namespace: changcan22
+  labels:
+    app: gpfshome-export
+    user: changcan22
+    purpose: liantai-to-yunwang-minio
+spec:
+  restartPolicy: Never
+  nodeSelector:
+    kubernetes.io/hostname: mg3232
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+  containers:
+    - name: mc-client
+      image: harbor.xa.xshixun.com:7443/deploy/quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-ec"]
+      args:
+        - |
+          echo "GPFS home: /gpfshome  ←  pvc-gpfshome-changcan22（只读）"
+          echo "云网 MinIO: ${MINIO_ENDPOINT}  bucket=${MINIO_BUCKET}"
+          echo "建议远端前缀: export/${MINIO_REMOTE_PREFIX}/"
+          echo "浏览: ls -la /gpfshome"
+          echo "上传: mc alias set yunwang \"\$MINIO_ENDPOINT\" \"\$AWS_ACCESS_KEY_ID\" \"\$AWS_SECRET_ACCESS_KEY\""
+          echo "  单文件: mc cp /gpfshome/<文件> yunwang/export/${MINIO_REMOTE_PREFIX}/<任务名>/<文件名>"
+          echo "  目录:   mc mirror --retry /gpfshome/<目录>/ yunwang/export/${MINIO_REMOTE_PREFIX}/<任务名>/"
+          exec sleep infinity
+      stdin: true
+      tty: true
+      envFrom:
+        - secretRef:
+            name: yunwang-data-export-minio
+      env:
+        - name: MINIO_ENDPOINT
+          value: https://minio-data.xa.hqzyai.com:9443
+        - name: MINIO_BUCKET
+          value: export
+        - name: MINIO_REMOTE_PREFIX
+          value: changcan22
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+      volumeMounts:
+        - name: gpfshome
+          mountPath: /gpfshome
+          readOnly: true
+  volumes:
+    - name: gpfshome
+      persistentVolumeClaim:
+        claimName: pvc-gpfshome-changcan22

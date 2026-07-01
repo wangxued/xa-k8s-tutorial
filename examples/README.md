@@ -59,7 +59,9 @@ helm upgrade --install my-dist-train ./charts/xay-ai-dist-train \
 | `job-multinode-h200-2nodes-8gpu.yaml` | 多机多卡 H200 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
 | `job-multinode-5090-2nodes-8gpu.yaml` | 多机多卡 5090 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
 | `job-multinode-h200-5090-separate.yaml` | H200 / 5090 分阶段两个独立 Job（含 TTL） |
-| `minio-client-pod.yaml` | 临时 MinIO 客户端 Pod（data-export 上传/下载） |
+| `minio-client-pod.yaml` | 临时 MinIO 客户端 Pod（云网集群内上传/下载） |
+| `liantai-yunwang-minio-secret.example.yaml` | 联泰侧云网 MinIO 凭据 Secret 模板（占位符） |
+| `liantai-changcan22-gpfshome-export-pod.yaml` | 联泰 GPFS → 云网 MinIO 导出 Pod（changcan22 已验证示例）；**部署前必改项见** [`data-export-minio-usage.md` §5](../docs/data-export-minio-usage.md#5-联泰-gpfs-历史数据迁入云网已验证示例) |
 | `service-web.yaml` | Web Service 示例 |
 | `httproute-web.yaml` | Gateway API HTTPRoute 示例 |
 
