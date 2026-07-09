@@ -29,10 +29,6 @@ spec:
   restartPolicy: Never
   nodeSelector:
     kubernetes.io/hostname: mg3232
-  securityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
   containers:
     - name: mc-client
       image: harbor.xa.xshixun.com:7443/deploy/quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z

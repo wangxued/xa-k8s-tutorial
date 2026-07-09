@@ -29,9 +29,15 @@ spec:
       subdomain: {{ include "xay-ai-dist-train.fullname" . }}
 {{- end }}
       restartPolicy: Never
+{{- if or (hasKey .Values "UID") (hasKey .Values "GID") }}
       securityContext:
-        runAsUser: {{ .Values.UID | default 0 }}
-        runAsGroup: {{ .Values.GID | default 0 }}
+{{- if hasKey .Values "UID" }}
+        runAsUser: {{ .Values.UID }}
+{{- end }}
+{{- if hasKey .Values "GID" }}
+        runAsGroup: {{ .Values.GID }}
+{{- end }}
+{{- end }}
 {{- if or (and $gpuType (ne (lower $gpuType) "none") (gt $gpuCount 0)) .Values.NodeSelector }}
       nodeSelector:
 {{- if and $gpuType (ne (lower $gpuType) "none") (gt $gpuCount 0) }}

@@ -9,8 +9,9 @@ ImagePullPolicy: IfNotPresent
 # GPU 类型：5090 或 H200。5090 仅支持 h3c-csi-sc-nfs。
 GPU: H200
 
-UID: 0
-GID: 0
+# 可选：显式指定容器运行用户。不设置时跟随镜像自身默认用户。
+# UID: 1000
+# GID: 1000
 
 Limits:
   CPU: "32"
