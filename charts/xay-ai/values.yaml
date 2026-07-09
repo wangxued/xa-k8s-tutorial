@@ -33,9 +33,9 @@ Strategy:
 # Label: ""
 # ContainerName: ""
 
-# 可选：容器运行用户。默认 root，适配多数 AI 镜像。
-UID: 0
-GID: 0
+# 可选：显式指定容器运行用户。不设置时跟随镜像自身默认用户。
+# UID: 1000
+# GID: 1000
 
 Limits:
   CPU: "8"
