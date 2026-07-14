@@ -34,7 +34,7 @@ spec:
   template:
     metadata:
       labels:
-{{ include "xay-ai.selectorLabels" . | nindent 8 }}
+{{ include "xay-ai.labels" . | nindent 8 }}
     spec:
 {{- if or (hasKey .Values "UID") (hasKey .Values "GID") }}
       securityContext:

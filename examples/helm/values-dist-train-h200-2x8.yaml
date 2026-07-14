@@ -1,6 +1,8 @@
 # 2 节点 × 8 卡 H200 分布式训练（共 16 卡）
 NameSpace: your-namespace
 BaseName: dist-h200-2x8
+Labels:
+  user: your-namespace
 ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: H200
 

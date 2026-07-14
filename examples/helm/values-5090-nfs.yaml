@@ -1,5 +1,7 @@
 NameSpace: your-namespace
 BaseName: train-5090-nfs
+Labels:
+  user: your-namespace
 ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: "5090"
 

@@ -30,8 +30,13 @@ Strategy:
 
 # 可选：覆盖自动生成名称。
 # DeployName: ""
-# Label: ""
 # ContainerName: ""
+
+# 额外标签，写入 Deployment、Service、PVC、Pod 等 metadata（不进入 selector）。
+# 建议与 namespace / 用户名对齐，便于 kubectl -l 筛选与平台归属识别。
+Labels: {}
+# Labels:
+#   user: your-username
 
 # 可选：显式指定容器运行用户。不设置时跟随镜像自身默认用户。
 # UID: 1000

@@ -1,6 +1,8 @@
 # 2 节点 × 2 卡 RTX 5090 分布式训练（共 4 卡，适合 namespace quota 较紧时起步）
 NameSpace: your-namespace
 BaseName: dist-5090-2x2
+Labels:
+  user: your-namespace
 ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 GPU: "5090"
 

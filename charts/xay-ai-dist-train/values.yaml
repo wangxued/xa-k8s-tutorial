@@ -3,6 +3,12 @@
 NameSpace: ""
 BaseName: dist-train
 
+# 额外标签，写入 Job、Headless Service、PVC、Pod 等 metadata（不进入 selector）。
+# 建议与 namespace / 用户名对齐，便于 kubectl -l 筛选与平台归属识别。
+Labels: {}
+# Labels:
+#   user: your-username
+
 ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 ImagePullPolicy: IfNotPresent
 

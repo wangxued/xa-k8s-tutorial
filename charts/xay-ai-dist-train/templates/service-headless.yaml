@@ -9,7 +9,7 @@ metadata:
 spec:
   clusterIP: None
   selector:
-    job-name: {{ include "xay-ai-dist-train.fullname" . }}
+{{ include "xay-ai-dist-train.selectorLabels" . | nindent 4 }}
   ports:
     - name: nccl
       port: {{ .Values.Distributed.masterPort | default 29500 }}

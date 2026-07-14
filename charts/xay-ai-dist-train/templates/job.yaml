@@ -23,7 +23,7 @@ spec:
   template:
     metadata:
       labels:
-{{ include "xay-ai-dist-train.selectorLabels" . | nindent 8 }}
+{{ include "xay-ai-dist-train.labels" . | nindent 8 }}
     spec:
 {{- if .Values.HeadlessService.enabled }}
       subdomain: {{ include "xay-ai-dist-train.fullname" . }}
