@@ -23,7 +23,6 @@
 {{- define "xay-ai.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "xay-ai.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app: {{ include "xay-ai.fullname" . }}
 {{- end -}}
 
 {{/*

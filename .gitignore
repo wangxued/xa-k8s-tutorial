@@ -1,6 +1,7 @@
 # 本地 Helm / Harbor 验证产物
 .validate-helm-examples-*/
 .validate-harbor-proxies-*/
+.e2e-helm-label-test/
 scripts/validate-*
 testing/
 
