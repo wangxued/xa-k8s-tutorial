@@ -122,6 +122,7 @@ StorageClass 支持矩阵：
 | [`docs/data-export-minio-usage.md`](docs/data-export-minio-usage.md) | **数据导出 MinIO**：Pod ↔ 办公网双向中转、联泰 GPFS 迁入示例、脚本 |
 | [`docs/mc-minio-cheatsheet.md`](docs/mc-minio-cheatsheet.md) | **mc 速查**：`cp` / `mirror` 上传下载单文件与目录 |
 | [`docs/gpu-workload-scenarios.md`](docs/gpu-workload-scenarios.md) | **单机 vs 多机选型**、Job TTL、训练完成后数据复用 |
+| [`docs/pod-inplace-resize-guide.md`](docs/pod-inplace-resize-guide.md) | **运行中 Pod 原地扩缩 CPU/内存**：命令参数、操作步骤与示例 |
 | [`docs/multinode-gpu-training.md`](docs/multinode-gpu-training.md) | **多机多卡训练**：Job、Headless Service、H200/5090 场景 |
 | [`charts/xay-ai-dist-train/README.md`](charts/xay-ai-dist-train/README.md) | 多机多卡 Helm Chart 参数 |
 | [`examples/README.md`](examples/README.md) | Helm values 和原生 YAML 示例说明 |
