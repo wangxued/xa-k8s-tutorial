@@ -10,8 +10,9 @@ BaseName: ai-workload
 ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 ImagePullPolicy: IfNotPresent
 
-# GPU 类型。当前支持 5090、H200；后续 B300 到位后可扩展。
-# 5090 仅支持 h3c-csi-sc-nfs；H200 支持 h3c-csi-sc-nfs 和 h3c-csi-sc-epc。
+# GPU 类型。当前支持 5090、H200、H20；后续 B300 到位后可扩展。
+# 5090 与 H20 仅支持 h3c-csi-sc-nfs；H200 支持 h3c-csi-sc-nfs 和 h3c-csi-sc-epc。
+# H20 当前只有 1 台（8 卡），仅适用于单机任务，不能用于多机训练。
 GPU: H200
 
 Replicas: 1

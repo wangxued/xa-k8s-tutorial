@@ -1,0 +1,34 @@
+NameSpace: your-namespace
+BaseName: train-h20-nfs
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+GPU: H20
+
+Limits:
+  CPU: "16"
+  memory: 64Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 16Gi
+
+Scratch:
+  enabled: true
+  storageClassName: local-path
+  size: 100Gi
+  mountPath: /scratch
+
+# H20 节点与 5090 一致，共享存储只能用 h3c-csi-sc-nfs。
+# 填 h3c-csi-sc-epc 时 Helm 渲染会直接报错。
+Workspace:
+  enabled: true
+  create: true
+  claimName: ""
+  storageClassName: h3c-csi-sc-nfs
+  size: 200Gi
+  accessModes:
+    - ReadWriteMany
+  mountPath: /workspace
+  readOnly: false
+
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && while true; do sleep 3600; done"]'

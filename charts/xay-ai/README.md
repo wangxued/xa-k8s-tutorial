@@ -3,6 +3,8 @@
 `xay-ai` 用于在雄安院 K8s 集群的个人 namespace 中部署 AI 训练、推理、Notebook 或 Web 服务工作负载。
 
 > **场景选型**：交互式单机开发、SSH 常驻任务使用本 Chart（**Deployment**）。跨多台 GPU 节点的 `torchrun` / DeepSpeed 分布式训练请使用 [`xay-ai-dist-train`](../xay-ai-dist-train/)（**Job**）。对照说明见 [`docs/gpu-workload-scenarios.md`](../../docs/gpu-workload-scenarios.md)。
+>
+> **新增卡型**：集群已开放 1 台 H20 节点（8 × H20-3e），设置 `GPU: H20` 即可使用，存储只能选 `h3c-csi-sc-nfs`。详见 [`docs/h20-node-usage.md`](../../docs/h20-node-usage.md)。
 
 Chart 会创建：
 
@@ -60,7 +62,7 @@ GPU: H200
 - `NameSpace`：个人 namespace，可在华清云 SaaS 查看；须与 `helm -n` 一致。
 - `BaseName`：任务基础名称，用于生成资源名。
 - `ContainerImage`：容器镜像地址。示例默认镜像为 `llm-course/lab:v2`；自定义任务 push 到个人 Harbor 项目后替换。
-- `GPU`：GPU 类型，当前可选 `5090` 或 `H200`。
+- `GPU`：GPU 类型，当前可选 `5090`、`H200` 或 `H20`。
 
 Harbor 镜像与个人项目用法见 [`../../docs/harbor-images.md`](../../docs/harbor-images.md)。
 
@@ -124,8 +126,9 @@ Strategy:
 |----------|------------------|------------------|----------|
 | 5090 | 支持 | 不支持 | 使用 NFS 共享数据 |
 | H200 | 支持 | 支持 | 通用共享用 NFS，高性能共享用 EPC |
+| H20 | 支持 | 不支持 | 使用 NFS 共享数据 |
 
-Chart 内置保护：当 `GPU: 5090` 且 `Workspace.storageClassName: h3c-csi-sc-epc` 时，Helm 渲染会直接失败，避免创建无法挂载的工作负载。
+Chart 内置保护：当 `GPU` 为 `5090` 或 `H20`，且 `Workspace.storageClassName` 设为 `h3c-csi-sc-epc` 时，Helm 渲染会直接失败，避免创建无法挂载的工作负载。
 
 ## 工作目录 PVC
 
@@ -146,7 +149,7 @@ Workspace:
 
 - `create: true`：Chart 创建新 PVC。
 - `create: false` + `claimName`：复用已有 PVC。
-- 5090 节点必须使用 `h3c-csi-sc-nfs`。
+- 5090 与 H20 节点必须使用 `h3c-csi-sc-nfs`。
 - H200 节点可使用 `h3c-csi-sc-nfs` 或 `h3c-csi-sc-epc`。
 
 ### accessModes 说明
@@ -275,9 +278,14 @@ ExtraPort: 7860
 
 ## 调度说明
 
-普通用户通常只需要设置 `GPU: 5090` 或 `GPU: H200`。Chart 会根据该字段生成当前集群已存在的 `gpu-type` 节点选择条件，并自动添加 GPU 节点所需 toleration。
+普通用户通常只需要设置 `GPU: 5090`、`GPU: H200` 或 `GPU: H20`。Chart 会根据该字段生成当前集群已存在的 `gpu-type` 节点选择条件，并自动添加 GPU 节点所需 toleration。
 
 不建议自行填写 `NodeSelector`、`Tolerations`、`Affinity`。当前集群未提供面向普通用户的 `accelerator`、`dedicated` 等自定义调度标签；随意添加不存在的 label 会导致 Pod 一直处于 `Pending`。
+
+另有两点需要避免：
+
+- **不要在工作负载中写死 `spec.nodeName`。** 这样会绕过调度器，一旦节点资源不足或条件不匹配，Pod 会被直接拒绝并由控制器反复重建，短时间内产生大量无效 Pod。指定节点范围请使用 `GPU` 字段。
+- **不要使用 `nvidia.com/gpu.product` 作为选择条件。** 该标签取值随卡型变化（如 `NVIDIA-H200`、`NVIDIA-H20-3e`、`NVIDIA-GeForce-RTX-5090`），从其他卡型的配置复制后容易忘记修改，导致 Pod 被 kubelet 以 `NodeAffinity` 拒绝。
 
 ## 常见排查
 
@@ -320,8 +328,9 @@ kubectl exec -it -n <namespace> <pod-name> -- ls -lah /workspace /scratch /model
 
 ## 注意事项
 
-- 5090 节点只能使用 `h3c-csi-sc-nfs`。
+- 5090 与 H20 节点只能使用 `h3c-csi-sc-nfs`。
 - H200 节点可使用 `h3c-csi-sc-nfs` 或 `h3c-csi-sc-epc`。
+- H20 当前只有 1 台（8 卡），仅适用于单机任务，不能用于多机训练。
 - 删除 Helm release 会删除 Chart 创建的 scratch PVC。
 - 公共模型权重建议只读挂载。
 - HTTPRoute 域名需先按平台规则申请。

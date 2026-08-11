@@ -12,6 +12,7 @@
 | 文件 | 适用场景 |
 |------|----------|
 | `values-5090-nfs.yaml` | 5090 节点，使用 `h3c-csi-sc-nfs` |
+| `values-h20-nfs.yaml` | H20 节点，使用 `h3c-csi-sc-nfs`（仅单机任务） |
 | `values-h200-nfs.yaml` | H200 节点，使用 `h3c-csi-sc-nfs` |
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
 | `values-egl-8-h200.yaml` | **单机 8 卡 H200 + EGL 渲染**（预留节点 `yw-gpu-33`） |
@@ -71,9 +72,9 @@ Web 服务外部访问配置详见 [`../docs/web-httproute-guide.md`](../docs/we
 
 ## StorageClass 注意事项
 
-- 5090 节点仅支持 `h3c-csi-sc-nfs`。
+- 5090 与 H20 节点仅支持 `h3c-csi-sc-nfs`。
 - H200 节点支持 `h3c-csi-sc-nfs` 和 `h3c-csi-sc-epc`。
-- 不要将 `h3c-csi-sc-epc` 用于 5090 节点。
+- 不要将 `h3c-csi-sc-epc` 用于 5090 或 H20 节点。
 
 ## MinIO 中转脚本
 

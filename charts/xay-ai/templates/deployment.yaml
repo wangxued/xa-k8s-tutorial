@@ -1,7 +1,7 @@
 {{- $gpuType := toString (.Values.GPU | default "") -}}
 {{- $gpuCount := int (.Values.Limits.GPU | default 0) -}}
-{{- if and (eq $gpuType "5090") .Values.Workspace.enabled (eq .Values.Workspace.storageClassName "h3c-csi-sc-epc") -}}
-{{- fail "5090 nodes only support h3c-csi-sc-nfs. Change Workspace.storageClassName to h3c-csi-sc-nfs." -}}
+{{- if and (has $gpuType (list "5090" "H20")) .Values.Workspace.enabled (eq .Values.Workspace.storageClassName "h3c-csi-sc-epc") -}}
+{{- fail (printf "%s nodes only support h3c-csi-sc-nfs. Change Workspace.storageClassName to h3c-csi-sc-nfs." $gpuType) -}}
 {{- end -}}
 {{- if and .Values.SharedModels.enabled (not .Values.SharedModels.claimName) -}}
 {{- fail "SharedModels.claimName is required when SharedModels.enabled is true." -}}

@@ -18,6 +18,7 @@
 | 多台 H200 协同训练 | ✅ | [`job-multinode-h200-2nodes-8gpu.yaml`](../examples/raw-yaml/job-multinode-h200-2nodes-8gpu.yaml) |
 | 多台 RTX 5090 协同训练 | ✅ | [`job-multinode-5090-2nodes-8gpu.yaml`](../examples/raw-yaml/job-multinode-5090-2nodes-8gpu.yaml) |
 | H200 与 5090 同一 NCCL 任务 | ❌ | 见 [`job-multinode-h200-5090-separate.yaml`](../examples/raw-yaml/job-multinode-h200-5090-separate.yaml) |
+| H20 多机训练 | ❌ | H20 仅 1 台，只能跑单机任务，见 [`h20-node-usage.md`](h20-node-usage.md) |
 
 ---
 
@@ -57,8 +58,9 @@ Headless Service **不对外提供访问入口**，仅在集群内做 Pod 间 DN
 | H200（`yw-gpu-33`~`40`） | 8 卡/台 | `h3c-csi-sc-epc` 或 `h3c-csi-sc-nfs` |
 | 5090（`yw-gpu-19`~`23`） | 8 卡/台 | `h3c-csi-sc-nfs` |
 | 5090（`yw-gpu-18`） | **6 卡** | `h3c-csi-sc-nfs` |
+| H20（`yw-gpu-41`） | 8 卡/台，**仅 1 台** | `h3c-csi-sc-nfs` |
 
-5090 **不可** 使用 `h3c-csi-sc-epc`。
+5090 与 H20 **不可** 使用 `h3c-csi-sc-epc`。H20 只有 1 台，不能用于多机训练，用法见 [`h20-node-usage.md`](h20-node-usage.md)。
 
 ### 3.3 调度必备项
 

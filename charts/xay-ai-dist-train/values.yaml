@@ -7,6 +7,7 @@ ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 ImagePullPolicy: IfNotPresent
 
 # GPU 类型：5090 或 H200。5090 仅支持 h3c-csi-sc-nfs。
+# H20 仅 1 台节点，无法用于多机训练，请使用 charts/xay-ai 跑单机任务。
 GPU: H200
 
 # 可选：显式指定容器运行用户。不设置时跟随镜像自身默认用户。

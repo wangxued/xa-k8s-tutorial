@@ -103,6 +103,7 @@ helm upgrade --install my-dist-train ./charts/xay-ai-dist-train \
 | **办公网数据导入 Pod** | **data-export MinIO** | 临时 S3 中转（本机上传 → Pod 下载），见 [data-export-minio-usage.md](docs/data-export-minio-usage.md) |
 | 5090 节点共享数据 | `h3c-csi-sc-nfs` | 5090 节点仅支持该共享 StorageClass |
 | H200 节点共享数据 | `h3c-csi-sc-nfs` 或 `h3c-csi-sc-epc` | H200 支持 NFS 和 EPC |
+| H20 节点共享数据 | `h3c-csi-sc-nfs` | H20 节点仅支持该共享 StorageClass |
 
 StorageClass 支持矩阵：
 
@@ -110,6 +111,7 @@ StorageClass 支持矩阵：
 |----------|------------------|------------------|
 | 5090 | 支持 | 不支持 |
 | H200 | 支持 | 支持 |
+| H20 | 支持 | 不支持 |
 
 ## 文档索引
 
@@ -117,6 +119,7 @@ StorageClass 支持矩阵：
 |------|------|
 | [`docs/kubeconfig-local-setup.md`](docs/kubeconfig-local-setup.md) | 本机 kubeconfig 配置、多集群管理、Lens/VS Code context 重复排查 |
 | [`charts/xay-ai/README.md`](charts/xay-ai/README.md) | Helm Chart 参数、GPU/StorageClass、PVC、共享内存、HTTPRoute 配置 |
+| [`docs/h20-node-usage.md`](docs/h20-node-usage.md) | **H20 节点使用说明**：节点规格、`GPU: H20` 配置、存储限制、常见误用 |
 | [`docs/harbor-images.md`](docs/harbor-images.md) | Harbor 地址、个人项目、登录 push/pull、在 K8s 中使用 |
 | [`docs/web-httproute-guide.md`](docs/web-httproute-guide.md) | Web 服务外部域名、HTTPRoute、`https://<域名>:9443/` 访问说明 |
 | [`docs/data-export-minio-usage.md`](docs/data-export-minio-usage.md) | **数据导出 MinIO**：Pod ↔ 办公网双向中转、联泰 GPFS 迁入示例、脚本 |
@@ -131,7 +134,7 @@ StorageClass 支持矩阵：
 
 | 目录 | 内容 |
 |------|------|
-| [`examples/helm/`](examples/helm/) | `xay-ai` / `xay-ai-dist-train` values：5090+NFS、H200+EPC、多机多卡、Web HTTPRoute |
+| [`examples/helm/`](examples/helm/) | `xay-ai` / `xay-ai-dist-train` values：5090+NFS、H200+EPC、H20+NFS、多机多卡、Web HTTPRoute |
 | [`examples/raw-yaml/`](examples/raw-yaml/) | PVC、Deployment、多机 Job、HTTPRoute 等原生 YAML |
 
 ## 常用命令
@@ -150,6 +153,7 @@ kubectl exec -it <pod-name> -- df -h
 
 - 只在个人 namespace 中创建和管理资源。
 - 申请的 CPU、内存、GPU、存储总量不能超过 namespace quota。
-- 5090 节点不要使用 `h3c-csi-sc-epc`。
+- 5090 与 H20 节点不要使用 `h3c-csi-sc-epc`。
+- 不要在工作负载中写死 `spec.nodeName`，会绕过调度器造成 Pod 被节点拒绝并反复重建；指定节点范围请使用 `gpu-type` 标签或 Chart 的 `GPU` 字段。
 - `/scratch` 是临时数据目录，任务删除后对应 PVC 也会删除。
 - Web 域名需要按平台规则申请后再写入 `HTTPRoute`，访问格式为 `https://<子域名>.xa.hqzyai.com:9443/`。
