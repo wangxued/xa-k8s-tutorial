@@ -126,6 +126,7 @@ StorageClass 支持矩阵：
 | [`docs/mc-minio-cheatsheet.md`](docs/mc-minio-cheatsheet.md) | **mc 速查**：`cp` / `mirror` 上传下载单文件与目录 |
 | [`docs/gpu-workload-scenarios.md`](docs/gpu-workload-scenarios.md) | **单机 vs 多机选型**、Job TTL、训练完成后数据复用 |
 | [`docs/pod-inplace-resize-guide.md`](docs/pod-inplace-resize-guide.md) | **运行中 Pod 原地扩缩 CPU/内存**：命令参数、操作步骤与示例 |
+| [`docs/pod-resource-limits-and-parallelism.md`](docs/pod-resource-limits-and-parallelism.md) | **容器资源上限与并行度设置**：`nproc` 不等于配额、编译/线程/DataLoader 并行度对照表、Pod 连不上自查 |
 | [`docs/multinode-gpu-training.md`](docs/multinode-gpu-training.md) | **多机多卡训练**：Job、Headless Service、H200/5090 场景 |
 | [`charts/xay-ai-dist-train/README.md`](charts/xay-ai-dist-train/README.md) | 多机多卡 Helm Chart 参数 |
 | [`examples/README.md`](examples/README.md) | Helm values 和原生 YAML 示例说明 |
@@ -153,6 +154,7 @@ kubectl exec -it <pod-name> -- df -h
 
 - 只在个人 namespace 中创建和管理资源。
 - 申请的 CPU、内存、GPU、存储总量不能超过 namespace quota。
+- 容器内 `nproc`、`free -h` 显示的是**整台节点**的规格，不是本任务的配额。编译并行度、`OMP_NUM_THREADS`、DataLoader `num_workers` 等须按实际配额设置，否则会打满配额导致 Pod 连不上或进程被杀，详见 [容器资源上限与并行度设置](docs/pod-resource-limits-and-parallelism.md)。
 - 5090 与 H20 节点不要使用 `h3c-csi-sc-epc`。
 - 不要在工作负载中写死 `spec.nodeName`，会绕过调度器造成 Pod 被节点拒绝并反复重建；指定节点范围请使用 `gpu-type` 标签或 Chart 的 `GPU` 字段。
 - `/scratch` 是临时数据目录，任务删除后对应 PVC 也会删除。
