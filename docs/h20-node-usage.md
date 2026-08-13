@@ -54,13 +54,14 @@ Limits:
 
 Workspace:
   enabled: true
-  create: true
+  create: false
+  claimName: pvc-workspace-your-existing
   storageClassName: h3c-csi-sc-nfs
-  size: 200Gi
-  accessModes:
-    - ReadWriteMany
   mountPath: /workspace
+  readOnly: false
 ```
+
+没有现成 PVC 时，解开 [`values-h20-nfs.yaml`](../examples/helm/values-h20-nfs.yaml) 中 `create: true` 整段注释。**`helm uninstall` 会删除 Chart 新建的 PVC。**
 
 部署：
 
@@ -122,5 +123,6 @@ kubectl exec -it -n <namespace> <pod-name> -- df -h /workspace
 | [`charts/xay-ai/README.md`](../charts/xay-ai/README.md) | Chart 完整参数说明 |
 | [`examples/helm/values-h20-nfs.yaml`](../examples/helm/values-h20-nfs.yaml) | H20 + NFS values 示例 |
 | [`docs/gpu-workload-scenarios.md`](gpu-workload-scenarios.md) | 单机 Deployment 与多机 Job 的选型 |
+| [`docs/gpu-idle-gc.md`](gpu-idle-gc.md) | 平台 GPU 空闲回收（`xay-ai` Deployment 可能被缩容） |
 | [`docs/harbor-images.md`](harbor-images.md) | 自定义镜像 push 到个人 Harbor 项目 |
 | [`docs/kubeconfig-local-setup.md`](kubeconfig-local-setup.md) | 本机 kubeconfig 配置 |

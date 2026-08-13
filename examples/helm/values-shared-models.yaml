@@ -11,15 +11,27 @@ Limits:
 UseShm: true
 ShmSize: 16Gi
 
+# 默认安全模式：复用已有 PVC。把 claimName 改成 kubectl get pvc 看到的名称。
 Workspace:
   enabled: true
-  create: true
+  create: false
+  claimName: pvc-workspace-your-existing
   storageClassName: h3c-csi-sc-nfs
-  size: 100Gi
-  accessModes:
-    - ReadWriteMany
   mountPath: /workspace
   readOnly: false
+
+# --- 需要 Chart 新建 PVC 时：注释掉上面整段，改用下面 ---
+# 警告：helm uninstall 会删除该 PVC。
+# Workspace:
+#   enabled: true
+#   create: true
+#   claimName: ""
+#   storageClassName: h3c-csi-sc-nfs
+#   size: 100Gi
+#   accessModes:
+#     - ReadWriteMany
+#   mountPath: /workspace
+#   readOnly: false
 
 SharedModels:
   enabled: true

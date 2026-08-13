@@ -1,0 +1,59 @@
+# 用卡前预热：不占 GPU，调度到 H200，挂载 EPC 传数据 / 配环境。
+#
+# Chart 硬限制：CPU ≤ 16、内存 ≤ 64Gi。本示例用 8C / 32Gi。
+#
+# 默认安全模式：Workspace.create: false，必须填写已有 PVC。
+# helm uninstall 不会删除该 PVC。预热与占卡 values 的 claimName 必须相同。
+#
+# 若需 Chart 新建 PVC：解开下方 create: true 整段，并注释掉 create: false 整段。
+# 警告：create: true 时禁止 helm uninstall（会删除新建的 PVC）。
+# 禁止改 Helm release 名、BaseName、NameSpace。
+#
+#   helm upgrade --install my-task ./charts/xay-ai -n <namespace> -f values-h200-epc-cpu-prep.yaml
+#   # 在 /workspace 传数据、装依赖
+#   helm upgrade --install my-task ./charts/xay-ai -n <namespace> -f values-h200-epc.yaml
+
+NameSpace: your-namespace
+BaseName: train-h200-epc
+ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
+GPU: H200
+ScheduleOnGPUNode: true
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 0
+
+UseShm: false
+
+Scratch:
+  enabled: false
+
+# 默认安全模式：复用已有 PVC。把 claimName 改成 kubectl get pvc 看到的名称。
+Workspace:
+  enabled: true
+  create: false
+  claimName: pvc-workspace-your-existing
+  storageClassName: h3c-csi-sc-epc
+  mountPath: /workspace
+  readOnly: false
+
+# --- 需要 Chart 新建 PVC 时：注释掉上面整段，改用下面 ---
+# 警告：helm uninstall 会删除该 PVC，/workspace 数据不可恢复。
+# Workspace:
+#   enabled: true
+#   create: true
+#   claimName: ""
+#   storageClassName: h3c-csi-sc-epc
+#   size: 500Gi
+#   accessModes:
+#     - ReadWriteMany
+#   mountPath: /workspace
+#   readOnly: false
+
+# --- 不需要 /workspace ---
+# Workspace:
+#   enabled: false
+
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && while true; do sleep 3600; done"]'

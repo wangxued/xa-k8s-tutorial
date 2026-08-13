@@ -5,7 +5,7 @@
 - [`helm/`](helm/)：配合 `charts/xay-ai` 或 `charts/xay-ai-dist-train` 使用的 values 文件。
 - [`raw-yaml/`](raw-yaml/)：不使用 Helm 时可参考的原生 Kubernetes YAML。
 
-多机多卡训练总览见 [`../docs/multinode-gpu-training.md`](../docs/multinode-gpu-training.md)。**单机 Deployment vs 多机 Job**、TTL、Completed 后数据复用见 [`../docs/gpu-workload-scenarios.md`](../docs/gpu-workload-scenarios.md)。
+多机多卡训练总览见 [`../docs/multinode-gpu-training.md`](../docs/multinode-gpu-training.md)。**单机 Deployment vs 多机 Job**、TTL、Completed 后数据复用见 [`../docs/gpu-workload-scenarios.md`](../docs/gpu-workload-scenarios.md)。平台 GPU 空闲回收见 [`../docs/gpu-idle-gc.md`](../docs/gpu-idle-gc.md)。
 
 ## Helm values
 
@@ -15,6 +15,8 @@
 | `values-h20-nfs.yaml` | H20 节点，使用 `h3c-csi-sc-nfs`（仅单机任务） |
 | `values-h200-nfs.yaml` | H200 节点，使用 `h3c-csi-sc-nfs` |
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
+| `values-h200-epc-cpu-prep.yaml` | **预热**：H200 + EPC，不占卡（传数据 / 配环境，CPU≤16、内存≤64Gi） |
+| `values-5090-nfs-cpu-prep.yaml` | **预热**：5090 + NFS，不占卡（H20 改 `GPU: H20`） |
 | `values-egl-8-h200.yaml` | **单机 8 卡 H200 + EGL 渲染**（预留节点 `yw-gpu-33`） |
 | `values-web-httproute.yaml` | 需要通过 HTTPRoute 暴露 Web 服务 |
 | `values-shared-models.yaml` | 只读挂载公共模型权重 |
@@ -23,6 +25,8 @@
 | `values-dist-train-h200-2x8.yaml` | **多机多卡**：2×H200×8 卡（占满 16 卡 quota） |
 | `values-dist-train-5090-2x8.yaml` | **多机多卡**：2×5090×8 卡（占满 16 卡 quota） |
 
+> **警告：示例默认 `Workspace.create: false`，必须把 `claimName` 改成已有 PVC。** `helm uninstall` 不会删除该盘。若解开 `create: true` 让 Chart 新建 PVC，uninstall 会删除该 PVC，已传入数据会丢失。预热与占卡须同一 `claimName` / release 名 / `BaseName`。不要设 `Workspace.enabled: false` 来复用 PVC。
+
 默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。
 
 ### 部署前必填项
@@ -30,6 +34,7 @@
 | 字段 | 说明 |
 |------|------|
 | `NameSpace` | 须与 `helm -n <namespace>` 一致 |
+| `Workspace.claimName` | **默认安全模式必填**：已有 PVC 名。没有现成盘时解开示例中 `create: true` 整段 |
 | `ContainerImage` | 默认 `llm-course/lab:v2`；自定义任务改为个人 Harbor 项目下的镜像 |
 | `SharedModels.claimName` | 仅平台已创建并授权的公共模型 PVC 可填 |
 | `HTTPRoute.host` | 须先按平台规则申请子域名 |

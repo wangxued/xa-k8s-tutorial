@@ -189,11 +189,27 @@ kubectl run pvc-inspect -n your-namespace --rm -it \
 
 在容器内查看 `/workspace`，另开终端执行 `kubectl cp` 拷出所需文件。
 
+### 5.5 用卡前预热、复用已有 PVC、关闭工作目录
+
+不占卡但要往 EPC/NFS 传数据或配环境，使用 [`values-h200-epc-cpu-prep.yaml`](../examples/helm/values-h200-epc-cpu-prep.yaml) 或 [`values-5090-nfs-cpu-prep.yaml`](../examples/helm/values-5090-nfs-cpu-prep.yaml)，规则见 [`charts/xay-ai/README.md`](../charts/xay-ai/README.md)「调度说明」。
+
+Workspace 三种写法（**默认安全模式是 `create: false`**，新建 PVC 须解开示例中的 `create: true` 注释）：
+
+| 写法 | 何时用 | `helm uninstall` |
+|------|--------|------------------|
+| `enabled: true` + `create: false` + `claimName`（**默认**） | **复用已有 PVC** | 不删除该 PVC |
+| `enabled: true` + `create: true`（需解开注释） | Chart 新建 `/workspace` | **删除 PVC，数据丢失** |
+| `enabled: false` | 不需要 `/workspace` | 无此 PVC |
+
+复用已有盘时**不要**设 `Workspace.enabled: false`，否则容器不挂 `/workspace`。预热 values 与随后的占卡 values 必须同一套 Workspace 配置。
+
 ---
 
 ## 6. 平台 GPU 空闲回收（gpu-gc）说明
 
-- **Deployment**（`xay-ai`）：GPU 持续空闲超过约 2 小时可能被平台 **缩容至 0**。
+完整规则（30 分钟巡检、2 小时峰值 < 5%、两阶段确认、缩容后如何恢复）见 **[`gpu-idle-gc.md`](gpu-idle-gc.md)**。摘要：
+
+- **Deployment**（`xay-ai`）：最近连续 2 小时 GPU 几乎未使用，且下一轮巡检仍空闲，可能被平台 **缩容**（常见为副本数变为 `0`）。不是「空闲 1 小时就清理」。
 - **Job**（`xay-ai-dist-train`）：当前 **不在 gpu-gc 回收范围内**；应在训练脚本正常退出，依赖 Job 完成 + `ttlSecondsAfterFinished` 释放 GPU。
 
 若在 Job 内长期运行 `sleep infinity` 占卡，GPU 不会被 gpu-gc 自动回收。
@@ -204,6 +220,7 @@ kubectl run pvc-inspect -n your-namespace --rm -it \
 
 | 文档 | 说明 |
 |------|------|
+| [`gpu-idle-gc.md`](gpu-idle-gc.md) | **平台 GPU 空闲回收**：巡检规则、两阶段确认、Deployment / Job 差异、缩容后恢复 |
 | [`multinode-gpu-training.md`](multinode-gpu-training.md) | 多机架构、Headless Service、H200/5090 |
 | [`charts/xay-ai/README.md`](../charts/xay-ai/README.md) | 单机 Deployment 参数 |
 | [`charts/xay-ai-dist-train/README.md`](../charts/xay-ai-dist-train/README.md) | 多机 Job 参数 |
@@ -215,4 +232,6 @@ kubectl run pvc-inspect -n your-namespace --rm -it \
 
 | 日期 | 说明 |
 |------|------|
+| 2026-08-13 | Workspace 默认改为 create: false 安全模式 |
+| 2026-08-13 | 空闲回收改为摘要，完整规则指向 gpu-idle-gc.md |
 | 2026-06-28 | 初版：单机/多机选型、TTL、Completed 数据复用 |

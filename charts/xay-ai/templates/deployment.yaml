@@ -1,13 +1,38 @@
 {{- $gpuType := toString (.Values.GPU | default "") -}}
 {{- $gpuCount := int (.Values.Limits.GPU | default 0) -}}
+{{- $pinToGPU := or (gt $gpuCount 0) (.Values.ScheduleOnGPUNode | default false) (and .Values.Workspace.enabled (eq (.Values.Workspace.storageClassName | default "") "h3c-csi-sc-epc")) -}}
 {{- if and (has $gpuType (list "5090" "H20")) .Values.Workspace.enabled (eq .Values.Workspace.storageClassName "h3c-csi-sc-epc") -}}
 {{- fail (printf "%s nodes only support h3c-csi-sc-nfs. Change Workspace.storageClassName to h3c-csi-sc-nfs." $gpuType) -}}
+{{- end -}}
+{{- if and .Values.Workspace.enabled (not .Values.Workspace.create) (not .Values.Workspace.claimName) -}}
+{{- fail "安全模式：Workspace.create 为 false 时必须填写已有 PVC 的 claimName。若需由 Chart 新建 PVC，将 Workspace.create 设为 true（helm uninstall 会删除该 PVC）。不要用 Workspace.enabled=false 来复用 PVC。" -}}
 {{- end -}}
 {{- if and .Values.SharedModels.enabled (not .Values.SharedModels.claimName) -}}
 {{- fail "SharedModels.claimName is required when SharedModels.enabled is true." -}}
 {{- end -}}
 {{- if and .Values.SharedWritable.enabled (not .Values.SharedWritable.claimName) -}}
 {{- fail "SharedWritable.claimName is required when SharedWritable.enabled is true." -}}
+{{- end -}}
+{{- if $pinToGPU -}}
+{{- if not (has $gpuType (list "H200" "5090" "H20")) -}}
+{{- fail "Scheduling onto GPU nodes requires GPU to be H200, 5090, or H20." -}}
+{{- end -}}
+{{- end -}}
+{{- if and $pinToGPU (le $gpuCount 0) -}}
+{{- $cpuStr := toString (.Values.Limits.CPU | default "") -}}
+{{- if not (regexMatch "^[0-9]+$" $cpuStr) -}}
+{{- fail "预热任务（Limits.GPU 为 0 且调度到 GPU 节点）的 Limits.CPU 必须是整数核（如 \"8\" 或 \"16\"），且不得超过 16。请改小 CPU，或改用占卡 values（Limits.GPU > 0）。" -}}
+{{- end -}}
+{{- if gt (int $cpuStr) 16 -}}
+{{- fail "预热任务（Limits.GPU 为 0 且调度到 GPU 节点）的 CPU 不得超过 16 核。请改小 Limits.CPU，或改用占卡 values（Limits.GPU > 0）。" -}}
+{{- end -}}
+{{- $memStr := toString (.Values.Limits.memory | default "") -}}
+{{- if not (regexMatch "^[0-9]+Gi$" $memStr) -}}
+{{- fail "预热任务（Limits.GPU 为 0 且调度到 GPU 节点）的 Limits.memory 必须带 Gi 后缀（如 32Gi 或 64Gi），且不得超过 64Gi。请改小内存，或改用占卡 values（Limits.GPU > 0）。" -}}
+{{- end -}}
+{{- if gt (int (trimSuffix "Gi" $memStr)) 64 -}}
+{{- fail "预热任务（Limits.GPU 为 0 且调度到 GPU 节点）的内存不得超过 64Gi。请改小 Limits.memory，或改用占卡 values（Limits.GPU > 0）。" -}}
+{{- end -}}
 {{- end -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -45,18 +70,18 @@ spec:
         runAsGroup: {{ .Values.GID }}
 {{- end }}
 {{- end }}
-{{- if or (and $gpuType (ne (lower $gpuType) "none") (gt $gpuCount 0)) .Values.NodeSelector }}
+{{- if or $pinToGPU .Values.NodeSelector }}
       nodeSelector:
-{{- if and $gpuType (ne (lower $gpuType) "none") (gt $gpuCount 0) }}
+{{- if $pinToGPU }}
         gpu-type: {{ $gpuType | quote }}
 {{- end }}
 {{- with .Values.NodeSelector }}
 {{ toYaml . | nindent 8 }}
 {{- end }}
 {{- end }}
-{{- if or (gt $gpuCount 0) .Values.Tolerations }}
+{{- if or $pinToGPU .Values.Tolerations }}
       tolerations:
-{{- if gt $gpuCount 0 }}
+{{- if $pinToGPU }}
         - key: nvidia.com/gpu
           operator: Exists
           effect: NoSchedule

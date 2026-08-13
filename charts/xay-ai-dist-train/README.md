@@ -10,6 +10,8 @@
 
 完整说明见 [`../../docs/multinode-gpu-training.md`](../../docs/multinode-gpu-training.md)。**单机 vs 多机选型、Job 完成后数据复用**见 [`../../docs/gpu-workload-scenarios.md`](../../docs/gpu-workload-scenarios.md)。
 
+本 Chart 创建的是 **Job**，**不在**平台 GPU 空闲回收（gpu-gc）范围内。训练应自行退出；完成后靠 `ttlSecondsAfterFinished` 清理。不要在 Job 内 `sleep infinity` 占卡。平台对 Deployment 的空闲回收规则见 [`../../docs/gpu-idle-gc.md`](../../docs/gpu-idle-gc.md)。
+
 ## 快速开始
 
 ```bash

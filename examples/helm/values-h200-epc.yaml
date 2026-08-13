@@ -17,16 +17,31 @@ Scratch:
   size: 100Gi
   mountPath: /scratch
 
+# 默认安全模式：复用已有 PVC。把 claimName 改成 kubectl get pvc 看到的名称。
 Workspace:
   enabled: true
-  create: true
-  claimName: ""
+  create: false
+  claimName: pvc-workspace-your-existing
   storageClassName: h3c-csi-sc-epc
-  size: 500Gi
-  accessModes:
-    - ReadWriteMany
   mountPath: /workspace
   readOnly: false
+
+# --- 需要 Chart 新建 PVC 时：注释掉上面整段，改用下面 ---
+# 警告：helm uninstall 会删除该 PVC。与 cpu-prep 一起用时两边必须同样改。
+# Workspace:
+#   enabled: true
+#   create: true
+#   claimName: ""
+#   storageClassName: h3c-csi-sc-epc
+#   size: 500Gi
+#   accessModes:
+#     - ReadWriteMany
+#   mountPath: /workspace
+#   readOnly: false
+
+# --- 不需要 /workspace ---
+# Workspace:
+#   enabled: false
 
 Command: '["bash", "-lc", "--"]'
 Args: '["cd /workspace && while true; do sleep 3600; done"]'

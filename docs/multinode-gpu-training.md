@@ -181,7 +181,7 @@ deepspeed --num_nodes="${NNODES}" \
 | PVC 无法挂载 | 5090 误用 EPC | 改为 `h3c-csi-sc-nfs` |
 | NCCL 超时 | DNS / 网络 | 确认 Headless Service 存在；设置 `NCCL_DEBUG=INFO` |
 | 仅 rank 0 运行 | 未用 torchrun | 勿直接 `python train.py` |
-| GPU 被回收 | 长期低利用率 | 见平台 GPU 空闲回收策略 |
+| GPU 被回收 | 长期低利用率（针对 Deployment；本方案 Job 不在 gpu-gc 范围） | 见 [`gpu-idle-gc.md`](gpu-idle-gc.md) |
 
 ---
 
@@ -201,6 +201,7 @@ deepspeed --num_nodes="${NNODES}" \
 
 | 文档 | 说明 |
 |------|------|
+| [`gpu-idle-gc.md`](gpu-idle-gc.md) | 平台 GPU 空闲回收（Job 不在范围内） |
 | [`gpu-workload-scenarios.md`](gpu-workload-scenarios.md) | 单机 vs 多机、TTL、Completed 数据复用 |
 | [`charts/xay-ai-dist-train/README.md`](../charts/xay-ai-dist-train/README.md) | Helm Chart 参数 |
 | [`examples/README.md`](../examples/README.md) | 全部示例索引 |
@@ -212,4 +213,5 @@ deepspeed --num_nodes="${NNODES}" \
 
 | 日期 | 说明 |
 |------|------|
+| 2026-08-13 | FAQ「GPU 被回收」指向 gpu-idle-gc.md（Job 不在 gpu-gc 范围） |
 | 2026-06-28 | 补充 TTL、Completed 数据复用；交叉引用 gpu-workload-scenarios |

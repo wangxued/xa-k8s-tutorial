@@ -62,7 +62,7 @@ helm upgrade --install my-task ./charts/xay-ai \
 | SSH 进容器写代码、单机调试、Jupyter、长期占 1～8 卡 | [`xay-ai`](charts/xay-ai/) | **Deployment** |
 | 跨多台 GPU 节点跑 `torchrun` / DeepSpeed | [`xay-ai-dist-train`](charts/xay-ai-dist-train/) | **Indexed Job** |
 
-完整对照（gpu-gc 回收、`ttlSecondsAfterFinished`、训练完成后如何复用 PVC 数据）见 **[GPU 工作负载场景选型](docs/gpu-workload-scenarios.md)**。
+完整对照（gpu-gc 回收、`ttlSecondsAfterFinished`、训练完成后如何复用 PVC 数据）见 **[GPU 工作负载场景选型](docs/gpu-workload-scenarios.md)**。平台 GPU 空闲回收规则见 **[平台 GPU 空闲回收说明](docs/gpu-idle-gc.md)**。
 
 ## 多机多卡训练（传送门）
 
@@ -124,6 +124,7 @@ StorageClass 支持矩阵：
 | [`docs/web-httproute-guide.md`](docs/web-httproute-guide.md) | Web 服务外部域名、HTTPRoute、`https://<域名>:9443/` 访问说明 |
 | [`docs/data-export-minio-usage.md`](docs/data-export-minio-usage.md) | **数据导出 MinIO**：Pod ↔ 办公网双向中转、联泰 GPFS 迁入示例、脚本 |
 | [`docs/mc-minio-cheatsheet.md`](docs/mc-minio-cheatsheet.md) | **mc 速查**：`cp` / `mirror` 上传下载单文件与目录 |
+| [`docs/gpu-idle-gc.md`](docs/gpu-idle-gc.md) | **平台 GPU 空闲回收**：2 小时低利用率两阶段确认、Deployment 可能被缩容、Job 不在回收范围 |
 | [`docs/gpu-workload-scenarios.md`](docs/gpu-workload-scenarios.md) | **单机 vs 多机选型**、Job TTL、训练完成后数据复用 |
 | [`docs/pod-inplace-resize-guide.md`](docs/pod-inplace-resize-guide.md) | **运行中 Pod 原地扩缩 CPU/内存**：命令参数、操作步骤与示例 |
 | [`docs/pod-resource-limits-and-parallelism.md`](docs/pod-resource-limits-and-parallelism.md) | **容器资源上限与并行度设置**：`nproc` 不等于配额、编译/线程/DataLoader 并行度对照表、Pod 连不上自查 |
@@ -157,5 +158,7 @@ kubectl exec -it <pod-name> -- df -h
 - 容器内 `nproc`、`free -h` 显示的是**整台节点**的规格，不是本任务的配额。编译并行度、`OMP_NUM_THREADS`、DataLoader `num_workers` 等须按实际配额设置，否则会打满配额导致 Pod 连不上或进程被杀，详见 [容器资源上限与并行度设置](docs/pod-resource-limits-and-parallelism.md)。
 - 5090 与 H20 节点不要使用 `h3c-csi-sc-epc`。
 - 不要在工作负载中写死 `spec.nodeName`，会绕过调度器造成 Pod 被节点拒绝并反复重建；指定节点范围请使用 `gpu-type` 标签或 Chart 的 `GPU` 字段。
-- `/scratch` 是临时数据目录，任务删除后对应 PVC 也会删除。
+- `xay-ai` 的 `Limits.GPU: 0` **默认不会**调度到 GPU 节点。预热见 [xay-ai Chart — 调度说明](charts/xay-ai/README.md#limitsgpu-0-默认不会进入-gpu-节点) 与 [`values-h200-epc-cpu-prep.yaml`](examples/helm/values-h200-epc-cpu-prep.yaml)。**Workspace 默认 `create: false`**，须填已有 `claimName`；解开 `create: true` 后 `helm uninstall` 才会删除 workspace PVC。不要设 `Workspace.enabled: false` 来复用 PVC。
+- 使用 `xay-ai`（Deployment）长期占卡时，最近连续约 2 小时 GPU 几乎未使用，可能被平台自动缩容；规则与恢复方法见 [平台 GPU 空闲回收说明](docs/gpu-idle-gc.md)。
+- `/scratch` 是临时数据目录，任务删除后对应 PVC 也会删除。Chart 创建的 `/workspace` PVC 在 `helm uninstall` 时同样会被删除。
 - Web 域名需要按平台规则申请后再写入 `HTTPRoute`，访问格式为 `https://<子域名>.xa.hqzyai.com:9443/`。

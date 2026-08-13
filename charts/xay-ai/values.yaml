@@ -38,10 +38,17 @@ Strategy:
 # UID: 1000
 # GID: 1000
 
+# Limits.GPU 为卡数。设为 0 时默认不申请 GPU，也不会调度到 GPU 节点。
+# 预热（传数据 / 配环境）请设 Limits.GPU: 0，并打开 ScheduleOnGPUNode
+#（Workspace 为 h3c-csi-sc-epc 时会自动钉到 H200）。详见 README「调度说明」。
 Limits:
   CPU: "8"
   memory: 32Gi
   GPU: 1
+
+# 不占卡但仍调度到 GPU 节点（挂 EPC、预热环境）。Limits.GPU > 0 时无需打开。
+# 预热场景 CPU 不得超过 16、内存不得超过 64Gi。
+ScheduleOnGPUNode: false
 
 # 共享内存，常用于 PyTorch DataLoader、Ray、浏览器渲染等场景。
 UseShm: true
@@ -64,10 +71,13 @@ Scratch:
   size: 100Gi
   mountPath: /scratch
 
-# 工作目录 PVC。可选择复用已有 PVC，或由 Chart 创建新 PVC。
+# 工作目录。默认安全模式：create: false，必须填写已有 PVC 的 claimName。
+# helm uninstall 不会删除该 PVC。
+# 若需 Chart 新建 PVC，将 create 改为 true 并填写 storageClassName/size
+#（警告：uninstall 会删除新建的 PVC，/workspace 数据丢失）。
 Workspace:
   enabled: true
-  create: true
+  create: false
   claimName: ""
   storageClassName: h3c-csi-sc-epc
   size: 200Gi
@@ -75,6 +85,22 @@ Workspace:
     - ReadWriteMany
   mountPath: /workspace
   readOnly: false
+
+# 需要 Chart 新建 PVC 时：
+# Workspace:
+#   enabled: true
+#   create: true
+#   claimName: ""
+#   storageClassName: h3c-csi-sc-epc
+#   size: 200Gi
+#   accessModes:
+#     - ReadWriteMany
+#   mountPath: /workspace
+#   readOnly: false
+#
+# 不需要 /workspace 时：
+# Workspace:
+#   enabled: false
 
 # 公共模型权重。默认不开启；仅在平台已提供公共模型 PVC 并告知 claimName 后启用。
 # Chart 不会自动创建公共模型 PVC。
