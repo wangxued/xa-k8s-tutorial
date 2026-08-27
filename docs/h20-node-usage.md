@@ -88,11 +88,13 @@ Chart 会自动生成 `gpu-type: H20` 的 nodeSelector 和 GPU 节点所需的 t
           effect: NoSchedule
 ```
 
-GPU 卡数通过 `resources.limits` 申请：
+GPU 卡数须同时写入 `resources.limits` 和 `resources.requests`（二者一致；SaaS 按 requests 展示卡数）：
 
 ```yaml
           resources:
             limits:
+              nvidia.com/gpu: 1
+            requests:
               nvidia.com/gpu: 1
 ```
 

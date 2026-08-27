@@ -152,6 +152,9 @@ spec:
             requests:
               cpu: {{ .Values.Limits.CPU | quote }}
               memory: {{ .Values.Limits.memory | quote }}
+{{- if gt $gpuCount 0 }}
+              nvidia.com/gpu: {{ $gpuCount }}
+{{- end }}
           volumeMounts:
 {{- if .Values.Workspace.enabled }}
             - name: workspace

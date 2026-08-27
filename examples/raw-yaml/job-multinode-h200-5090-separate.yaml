@@ -85,6 +85,8 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: "8"
+            requests:
+              nvidia.com/gpu: "8"
           env:
             - name: MASTER_ADDR
               value: distill-h200-0.distill-h200
@@ -159,6 +161,8 @@ spec:
           image: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
           resources:
             limits:
+              nvidia.com/gpu: "4"
+            requests:
               nvidia.com/gpu: "4"
           env:
             - name: MASTER_ADDR

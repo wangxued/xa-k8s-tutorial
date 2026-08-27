@@ -97,9 +97,9 @@ Limits:
 说明：
 
 - 顶层 `GPU` 是卡型（`5090` / `H200` / `H20`），`Limits.GPU` 是申请的卡数，两者不要混用。
-- `Limits.GPU` 为申请的 GPU 卡数。大于 `0` 时才会写入 `nvidia.com/gpu`，并自动加上 GPU 节点的 `nodeSelector` 与 toleration。
+- `Limits.GPU` 为申请的 GPU 卡数。大于 `0` 时会同时写入 requests 和 limits 的 `nvidia.com/gpu`，并自动加上 GPU 节点的 `nodeSelector` 与 toleration。SaaS 按 requests 展示单条部署卡数，只写 limits 会导致页面卡数为空。
 - **`Limits.GPU: 0` 默认不会进入 GPU 节点**（不申请卡、也不带 selector/toleration），Pod 通常落到非 GPU 节点。例外：`ScheduleOnGPUNode: true`，或 Workspace 使用 `h3c-csi-sc-epc`（自动钉到 H200）。详见下方「调度说明」。
-- `Limits.CPU` 和 `Limits.memory` 同时作为 requests 和 limits。
+- `Limits.CPU`、`Limits.memory` 和 `Limits.GPU`（大于 `0` 时）同时作为 requests 和 limits。
 - 总资源不能超过个人 namespace 的 quota。
 - GPU 任务（`Limits.GPU` > 0）默认带有 `nvidia.com/gpu=true:NoSchedule` toleration，并按 `gpu-type` 标签调度到对应节点。
 
