@@ -9,7 +9,8 @@
 | 华清云 SaaS | <https://xaai.hqzyai.com:19443/> | 统一登录、查看 namespace、下载 kubeconfig、查看 Harbor 账号、平台侧资源管理 |
 | SaaS 帮助文档 | <https://saasdoc.xa.hqzyai.com:19443/> | 平台侧功能说明 |
 | K8s API | `https://k8s-yw.hqzyai.com:6443` | kubeconfig 访问集群 API |
-| Harbor | <https://harbor.xa.hqzyai.com:19443/> | 私有镜像仓库；示例默认镜像 `llm-course/lab:v2`，详见 [`docs/harbor-images.md`](docs/harbor-images.md) |
+| Harbor（云网） | <https://harbor.xa.hqzyai.com:19443/> | 云网私有仓；示例默认镜像 `llm-course/lab:v2`，详见 [`docs/harbor-images.md`](docs/harbor-images.md) |
+| Harbor（深圳） | <https://harbor.sz.hqzyai.com/> | 深圳仓；项目由华清云自动创建。大镜像推这里。部署见 [`docs/sz-k8s-hostpath.md`](docs/sz-k8s-hostpath.md) |
 
 ## 使用边界
 

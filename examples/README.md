@@ -15,6 +15,7 @@
 | `values-h20-nfs.yaml` | H20 节点，使用 `h3c-csi-sc-nfs`（仅单机任务） |
 | `values-h200-nfs.yaml` | H200 节点，使用 `h3c-csi-sc-nfs` |
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
+| `values-sz-h200-hostpath.yaml` | **深圳 sz-k8s**：H200 + hostPath `/data1` `/data2` |
 | `values-h200-epc-cpu-prep.yaml` | **预热**：H200 + EPC，不占卡（传数据 / 配环境，CPU≤16、内存≤64Gi） |
 | `values-5090-nfs-cpu-prep.yaml` | **预热**：5090 + NFS，不占卡（H20 改 `GPU: H20`） |
 | `values-egl-8-h200.yaml` | **单机 8 卡 H200 + EGL 渲染**（预留节点 `yw-gpu-33`） |
@@ -27,7 +28,7 @@
 
 > **警告：示例默认 `Workspace.create: false`，必须把 `claimName` 改成已有 PVC。** `helm uninstall` 不会删除该盘。若解开 `create: true` 让 Chart 新建 PVC，uninstall 会删除该 PVC，已传入数据会丢失。预热与占卡须同一 `claimName` / release 名 / `BaseName`。不要设 `Workspace.enabled: false` 来复用 PVC。
 
-默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。
+云网默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。深圳用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)，说明见 [`../docs/sz-k8s-hostpath.md`](../docs/sz-k8s-hostpath.md)。
 
 ### 部署前必填项
 
@@ -80,6 +81,7 @@ Web 服务外部访问配置详见 [`../docs/web-httproute-guide.md`](../docs/we
 - 5090 与 H20 节点仅支持 `h3c-csi-sc-nfs`。
 - H200 节点支持 `h3c-csi-sc-nfs` 和 `h3c-csi-sc-epc`。
 - 不要将 `h3c-csi-sc-epc` 用于 5090 或 H20 节点。
+- 深圳 sz-k8s 用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)。
 
 ## MinIO 中转脚本
 

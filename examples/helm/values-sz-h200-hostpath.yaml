@@ -1,0 +1,43 @@
+# 深圳 sz-k8s。部署前改 NameSpace、节点、hostPath 路径、镜像。
+NameSpace: your-namespace
+BaseName: sz-h200-hostpath
+ContainerImage: harbor.sz.hqzyai.com/cs-<username>/lab:v1
+GPU: H200
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 16Gi
+
+Scratch:
+  enabled: false
+
+Workspace:
+  enabled: false
+
+# 与下面 hostPath 必须是同一台。优先 10GbE 网口：sz-gpu-13 / 14 / 18。
+# sz-gpu-10 是 1GbE 网口，拉大镜像会慢。
+NodeSelector:
+  kubernetes.io/hostname: sz-gpu-14
+
+ExtraVolumes:
+  - name: data1
+    hostPath:
+      path: /data1/CHANGE-ME
+      type: DirectoryOrCreate
+  - name: data2
+    hostPath:
+      path: /data2/CHANGE-ME
+      type: DirectoryOrCreate
+
+ExtraVolumeMounts:
+  - name: data1
+    mountPath: /workspace
+  - name: data2
+    mountPath: /data2
+
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && while true; do sleep 3600; done"]'
