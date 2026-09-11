@@ -1,0 +1,43 @@
+# 深圳 sz-k8s 个人 namespace 用卡验证。基于 values-sz-h200-hostpath.yaml。
+# 占位镜像/目录已换成现网可用值；验证完可 helm uninstall my-task。
+NameSpace: cs-wangxuedong-itcl
+BaseName: sz-h200-hostpath
+# 个人仓 cs-wangxuedong 还是空的；先用公司公共仓小镜像验调度/用卡/hostPath。
+ContainerImage: harbor.hqzyai.com/dockerhub-proxy/nvidia/cuda:12.6.0-base-ubuntu22.04
+GPU: H200
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 16Gi
+
+Scratch:
+  enabled: false
+
+Workspace:
+  enabled: false
+
+NodeSelector:
+  kubernetes.io/hostname: sz-gpu-14
+
+ExtraVolumes:
+  - name: data1
+    hostPath:
+      path: /data1/cs-wangxuedong-itcl
+      type: DirectoryOrCreate
+  - name: data2
+    hostPath:
+      path: /data2/cs-wangxuedong-itcl
+      type: DirectoryOrCreate
+
+ExtraVolumeMounts:
+  - name: data1
+    mountPath: /workspace
+  - name: data2
+    mountPath: /data2
+
+Command: '["bash", "-lc", "--"]'
+Args: '["nvidia-smi && mkdir -p /workspace /data2 && date -Is | tee /workspace/gpu-check.txt && nvidia-smi -L | tee -a /workspace/gpu-check.txt && while true; do sleep 3600; done"]'
