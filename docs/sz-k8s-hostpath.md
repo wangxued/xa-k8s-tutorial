@@ -1,6 +1,8 @@
-# 深圳 sz-k8s 部署示例
+# 深圳临时集群 sz-k8s 部署示例
 
-深圳集群用 [`examples/helm/values-sz-h200-hostpath.yaml`](../examples/helm/values-sz-h200-hostpath.yaml)。复制后改 namespace、节点、目录名和镜像。
+这是 4 台公网 H200 的临时集群（`sz-gpu-10/13/14/18`，`harbor.sz.hqzyai.com`）。新集群 `sz-k8s-prod`（5 台 H800）不要用这篇，也不要挂 hostPath。请看 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md)。
+
+临时集群用 [`examples/helm/values-sz-h200-hostpath.yaml`](../examples/helm/values-sz-h200-hostpath.yaml)。复制后改 namespace、节点、目录名和镜像。
 
 ```bash
 cp examples/helm/values-sz-h200-hostpath.yaml values-my-sz.yaml

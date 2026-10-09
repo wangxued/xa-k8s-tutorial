@@ -1,0 +1,86 @@
+# 新深圳集群 sz-k8s-prod。应用前把 your-namespace 和镜像改成自己的。
+# 说明：docs/sz-k8s-prod-pod.md
+# 两块 PVC 都是单机盘。Pod 第一次落到哪台 H800，数据就留在哪台。
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sz-h800-workspace
+  namespace: your-namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path-data1
+  resources:
+    requests:
+      storage: 200Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sz-h800-scratch
+  namespace: your-namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sz-h800-workload
+  namespace: your-namespace
+  labels:
+    app: sz-h800-workload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sz-h800-workload
+  template:
+    metadata:
+      labels:
+        app: sz-h800-workload
+    spec:
+      nodeSelector:
+        gpu-type: H800
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      containers:
+        - name: workload
+          image: harbor.sz-prod.hqzyai.com:8443/cs-<username>/lab:v1
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "-lc", "--"]
+          args: ["cd /workspace && while true; do sleep 3600; done"]
+          resources:
+            requests:
+              cpu: "8"
+              memory: 32Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: 32Gi
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: scratch
+              mountPath: /scratch
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: sz-h800-workspace
+        - name: scratch
+          persistentVolumeClaim:
+            claimName: sz-h800-scratch
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi

@@ -10,7 +10,9 @@
 | SaaS 帮助文档 | <https://saasdoc.xa.hqzyai.com:19443/> | 平台侧功能说明 |
 | K8s API | `https://k8s-yw.hqzyai.com:6443` | kubeconfig 访问集群 API |
 | Harbor（云网） | <https://harbor.xa.hqzyai.com:19443/> | 云网私有仓；示例默认镜像 `llm-course/lab:v2`，详见 [`docs/harbor-images.md`](docs/harbor-images.md) |
-| Harbor（深圳） | <https://harbor.sz.hqzyai.com/> | 深圳仓；项目由华清云自动创建。大镜像推这里。部署见 [`docs/sz-k8s-hostpath.md`](docs/sz-k8s-hostpath.md) |
+| Harbor（深圳临时集群） | <https://harbor.sz.hqzyai.com/> | 4 台 H200 的临时集群。部署见 [`docs/sz-k8s-hostpath.md`](docs/sz-k8s-hostpath.md) |
+| K8s API（新深圳集群） | `https://sz-prod.hqzyai.com:6443` | `sz-k8s-prod`，5 台 H800。kubeconfig 由华清云提供 |
+| Harbor（新深圳集群） | <https://harbor.sz-prod.hqzyai.com:8443/> | 新集群的镜像仓库。部署见 [`docs/sz-k8s-prod-pod.md`](docs/sz-k8s-prod-pod.md) |
 
 ## 使用边界
 

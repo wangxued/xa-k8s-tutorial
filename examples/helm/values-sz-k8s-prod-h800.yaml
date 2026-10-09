@@ -1,0 +1,39 @@
+# 新深圳集群 sz-k8s-prod（5 台 H800）。部署前改 NameSpace 和镜像。
+# 说明：docs/sz-k8s-prod-pod.md
+# 不要挂 hostPath。不要把这篇用到临时集群 sz-k8s，也不要把云网的 EPC/NFS 存储类用到这里。
+NameSpace: your-namespace
+BaseName: sz-h800
+ContainerImage: harbor.sz-prod.hqzyai.com:8443/cs-<username>/lab:v1
+ImagePullPolicy: IfNotPresent
+GPU: H800
+
+Limits:
+  CPU: "8"
+  memory: 32Gi
+  GPU: 1
+
+UseShm: true
+ShmSize: 16Gi
+
+# /scratch：调度到的那台 H800 的 /data。helm uninstall 会删除这块 PVC。
+Scratch:
+  enabled: true
+  storageClassName: local-path
+  size: 100Gi
+  mountPath: /scratch
+
+# /workspace：同一台机器的 /data1。helm uninstall 会删除这块 PVC。
+# 已有 PVC 时把 create 改为 false，并填写 claimName。卷不能换节点。
+Workspace:
+  enabled: true
+  create: true
+  claimName: ""
+  storageClassName: local-path-data1
+  size: 200Gi
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /workspace
+  readOnly: false
+
+Command: '["bash", "-lc", "--"]'
+Args: '["cd /workspace && while true; do sleep 3600; done"]'

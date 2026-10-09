@@ -15,7 +15,8 @@
 | `values-h20-nfs.yaml` | H20 节点，使用 `h3c-csi-sc-nfs`（仅单机任务） |
 | `values-h200-nfs.yaml` | H200 节点，使用 `h3c-csi-sc-nfs` |
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
-| `values-sz-h200-hostpath.yaml` | **深圳 sz-k8s**：H200 + hostPath `/data1` `/data2` |
+| `values-sz-h200-hostpath.yaml` | **深圳临时集群 sz-k8s**：4 台 H200 + hostPath `/data1` `/data2` |
+| `values-sz-k8s-prod-h800.yaml` | **新深圳集群 sz-k8s-prod**：H800 + PVC，不用 hostPath |
 | `values-h200-epc-cpu-prep.yaml` | **预热**：H200 + EPC，不占卡（传数据 / 配环境，CPU≤16、内存≤64Gi） |
 | `values-5090-nfs-cpu-prep.yaml` | **预热**：5090 + NFS，不占卡（H20 改 `GPU: H20`） |
 | `values-egl-8-h200.yaml` | **单机 8 卡 H200 + EGL 渲染**（预留节点 `yw-gpu-33`） |
@@ -28,7 +29,7 @@
 
 > **警告：示例默认 `Workspace.create: false`，必须把 `claimName` 改成已有 PVC。** `helm uninstall` 不会删除该盘。若解开 `create: true` 让 Chart 新建 PVC，uninstall 会删除该 PVC，已传入数据会丢失。预热与占卡须同一 `claimName` / release 名 / `BaseName`。不要设 `Workspace.enabled: false` 来复用 PVC。
 
-云网默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。深圳用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)，说明见 [`../docs/sz-k8s-hostpath.md`](../docs/sz-k8s-hostpath.md)。
+云网默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。深圳临时集群用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)，说明见 [`../docs/sz-k8s-hostpath.md`](../docs/sz-k8s-hostpath.md)。新深圳集群用 [`values-sz-k8s-prod-h800.yaml`](helm/values-sz-k8s-prod-h800.yaml)，说明见 [`../docs/sz-k8s-prod-pod.md`](../docs/sz-k8s-prod-pod.md)。
 
 ### 部署前必填项
 
@@ -62,7 +63,8 @@ helm upgrade --install my-dist-train ./charts/xay-ai-dist-train \
 |------|------|
 | `pvc-ultrastor-nfs.yaml` | NFS 共享 PVC |
 | `pvc-ultrastor-epc-h200.yaml` | H200 可用的 EPC 共享 PVC |
-| `deployment-gpu-workload.yaml` | GPU Deployment 示例（单机） |
+| `deployment-gpu-workload.yaml` | GPU Deployment 示例（单机，云网） |
+| `deployment-sz-k8s-prod-h800.yaml` | 新深圳集群 H800：PVC + Deployment，不用 hostPath |
 | `job-multinode-h200-2nodes-8gpu.yaml` | 多机多卡 H200 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
 | `job-multinode-5090-2nodes-8gpu.yaml` | 多机多卡 5090 Job + Headless Service（含 `ttlSecondsAfterFinished: 86400`） |
 | `job-multinode-h200-5090-separate.yaml` | H200 / 5090 分阶段两个独立 Job（含 TTL） |
@@ -81,7 +83,8 @@ Web 服务外部访问配置详见 [`../docs/web-httproute-guide.md`](../docs/we
 - 5090 与 H20 节点仅支持 `h3c-csi-sc-nfs`。
 - H200 节点支持 `h3c-csi-sc-nfs` 和 `h3c-csi-sc-epc`。
 - 不要将 `h3c-csi-sc-epc` 用于 5090 或 H20 节点。
-- 深圳 sz-k8s 用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)。
+- 深圳临时集群 sz-k8s 用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)。
+- 新深圳集群 sz-k8s-prod 用 `local-path` 和 `local-path-data1`，访问模式 `ReadWriteOnce`。不要挂 hostPath。说明见 [`../docs/sz-k8s-prod-pod.md`](../docs/sz-k8s-prod-pod.md)。
 
 ## MinIO 中转脚本
 
