@@ -14,8 +14,8 @@
 {{- fail "SharedWritable.claimName is required when SharedWritable.enabled is true." -}}
 {{- end -}}
 {{- if $pinToGPU -}}
-{{- if not (has $gpuType (list "H200" "5090" "H20")) -}}
-{{- fail "Scheduling onto GPU nodes requires GPU to be H200, 5090, or H20." -}}
+{{- if not (has $gpuType (list "H200" "5090" "H20" "H800")) -}}
+{{- fail "Scheduling onto GPU nodes requires GPU to be H200, 5090, H20, or H800." -}}
 {{- end -}}
 {{- end -}}
 {{- if and $pinToGPU (le $gpuCount 0) -}}

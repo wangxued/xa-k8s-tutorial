@@ -80,7 +80,7 @@ Workspace:
 - `NameSpace`：个人 namespace，可在华清云 SaaS 查看；须与 `helm -n` 一致。
 - `BaseName`：任务基础名称，用于生成资源名。
 - `ContainerImage`：容器镜像地址。示例默认镜像为 `llm-course/lab:v2`；自定义任务 push 到个人 Harbor 项目后替换。
-- `GPU`：GPU 类型，当前可选 `5090`、`H200` 或 `H20`。
+- `GPU`：GPU 类型。云网可选 `5090`、`H200` 或 `H20`。新深圳集群 `sz-k8s-prod` 用 `H800`，见 [`docs/sz-k8s-prod-pod.md`](../../docs/sz-k8s-prod-pod.md)。
 - `Workspace.claimName`：默认 `create: false`，必须填写已有 PVC。没有现成盘时解开示例中 `create: true` 整段。
 
 Harbor 镜像与个人项目用法见 [`../../docs/harbor-images.md`](../../docs/harbor-images.md)。
