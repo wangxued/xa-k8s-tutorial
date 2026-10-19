@@ -102,7 +102,27 @@ spec:
 
 副本数是 1、策略是 `RollingUpdate`、并且 `maxUnavailable` 算出来是 0 时，旧 Pod 会先留着。节点上没有空闲卡时，新 Pod 一直 Pending，旧进程继续占卡，代理也不会进到正在跑的容器里。节点上还有空闲卡时，新 Pod 起来之后旧 Pod 会被停掉，内存里的进度会丢。
 
-要访问公网时，用带这组变量的新任务。已经在跑的任务继续跑，等用户自己停掉并重新提交之后再生效。
+新任务把这组变量写进 Pod 模板。已经在跑、之前没写变量的容器，可以按下一节在容器里面临时补上，Pod 不会重建，卡仍留在原来的任务上。
+
+## 已经在跑的容器里临时补上
+
+进入正在跑的容器，在当前终端里执行：
+
+```bash
+export http_proxy=http://33.1.42.5:8888
+export https_proxy=http://33.1.42.5:8888
+export HTTP_PROXY=http://33.1.42.5:8888
+export HTTPS_PROXY=http://33.1.42.5:8888
+export no_proxy=localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com
+export NO_PROXY=localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com
+curl -I --connect-timeout 15 http://www.baidu.com
+```
+
+第一行状态是 `HTTP/1.1 200` 时，这个终端已经能访问公网。
+
+这次 `export` 只属于当前终端，以及从这个终端再启动的 `curl`、`pip`、`git`、`apt`。另一个终端看不到这些变量。训练进程如果在设置之前就已经启动，它自己的环境也不会变。Python 可以在那个进程里面设置，例如 `os.environ["http_proxy"] = "http://33.1.42.5:8888"`，同一进程之后新发起的、会读取这些变量的请求才会走代理。四组代理变量和两组排除变量都要设。
+
+容器一旦重建，这次设置就没了。下次重新提交时，仍要把变量写进 Pod 模板。
 
 ## 在容器里检查
 
