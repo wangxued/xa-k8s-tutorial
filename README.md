@@ -8,11 +8,11 @@
 |------|------|------|
 | 华清云 SaaS | <https://xaai.hqzyai.com:19443/> | 统一登录、查看 namespace、下载 kubeconfig、查看 Harbor 账号、平台侧资源管理 |
 | SaaS 帮助文档 | <https://saasdoc.xa.hqzyai.com:19443/> | 平台侧功能说明 |
-| K8s API | `https://k8s-yw.hqzyai.com:6443` | kubeconfig 访问集群 API |
+| K8s API | 请通过华清云平台获取对应集群 API 地址 | kubeconfig 访问集群 API |
 | Harbor（云网） | <https://harbor.xa.hqzyai.com:19443/> | 云网私有仓；示例默认镜像 `llm-course/lab:v2`，详见 [`docs/harbor-images.md`](docs/harbor-images.md) |
 | Harbor（深圳临时集群） | <https://harbor.sz.hqzyai.com/> | 4 台 H200 的临时集群。部署见 [`docs/sz-k8s-hostpath.md`](docs/sz-k8s-hostpath.md) |
-| K8s API（新深圳集群） | `https://sz-prod.hqzyai.com:6443` | `sz-k8s-prod`，5 台 H800。kubeconfig 由华清云提供 |
-| Harbor（新深圳集群） | <https://harbor.sz-prod.hqzyai.com:8443/> | 新集群的镜像仓库。部署见 [`docs/sz-k8s-prod-pod.md`](docs/sz-k8s-prod-pod.md) |
+| K8s API（新深圳集群） | 请通过华清云平台获取对应集群 API 地址 | `sz-k8s-prod`，5 台 H800 和 8 台 H200。kubeconfig 由华清云提供 |
+| Harbor（新深圳集群） | <https://harbor.sz-prod.hqzyai.com:8443/> | 新集群的镜像仓库。部署见 [`docs/sz-k8s-prod-pod.md`](docs/sz-k8s-prod-pod.md)。H200 访问公网见 [`docs/sz-k8s-prod-h200-network.md`](docs/sz-k8s-prod-h200-network.md) |
 
 ## 使用边界
 
@@ -123,6 +123,8 @@ StorageClass 支持矩阵：
 | [`docs/kubeconfig-local-setup.md`](docs/kubeconfig-local-setup.md) | 本机 kubeconfig 配置、多集群管理、Lens/VS Code context 重复排查 |
 | [`charts/xay-ai/README.md`](charts/xay-ai/README.md) | Helm Chart 参数、GPU/StorageClass、PVC、共享内存、HTTPRoute 配置 |
 | [`docs/h20-node-usage.md`](docs/h20-node-usage.md) | **H20 节点使用说明**：节点规格、`GPU: H20` 配置、存储限制、常见误用 |
+| [`docs/sz-k8s-prod-pod.md`](docs/sz-k8s-prod-pod.md) | **新深圳集群**：H800 / H200 创建 Pod、本地盘、禁止 hostPath |
+| [`docs/sz-k8s-prod-h200-network.md`](docs/sz-k8s-prod-h200-network.md) | **新深圳集群 H200 公网**：Pod 里配置 `http://33.1.42.5:8888` |
 | [`docs/harbor-images.md`](docs/harbor-images.md) | Harbor 地址、个人项目、登录 push/pull、在 K8s 中使用 |
 | [`docs/web-httproute-guide.md`](docs/web-httproute-guide.md) | Web 服务外部域名、HTTPRoute、`https://<域名>:9443/` 访问说明 |
 | [`docs/data-export-minio-usage.md`](docs/data-export-minio-usage.md) | **数据导出 MinIO**：Pod ↔ 办公网双向中转、联泰 GPFS 迁入示例、脚本 |

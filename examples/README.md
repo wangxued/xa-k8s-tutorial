@@ -17,6 +17,7 @@
 | `values-h200-epc.yaml` | H200 节点，使用 `h3c-csi-sc-epc` |
 | `values-sz-h200-hostpath.yaml` | **深圳临时集群 sz-k8s**：4 台 H200 + hostPath `/data1` `/data2` |
 | `values-sz-k8s-prod-h800.yaml` | **新深圳集群 sz-k8s-prod**：H800 + PVC，不用 hostPath |
+| `values-sz-k8s-prod-h200.yaml` | **新深圳集群 sz-k8s-prod**：H200 + PVC，并带公网代理 |
 | `values-h200-epc-cpu-prep.yaml` | **预热**：H200 + EPC，不占卡（传数据 / 配环境，CPU≤16、内存≤64Gi） |
 | `values-5090-nfs-cpu-prep.yaml` | **预热**：5090 + NFS，不占卡（H20 改 `GPU: H20`） |
 | `values-egl-8-h200.yaml` | **单机 8 卡 H200 + EGL 渲染**（预留节点 `yw-gpu-33`） |
@@ -29,7 +30,7 @@
 
 > **警告：示例默认 `Workspace.create: false`，必须把 `claimName` 改成已有 PVC。** `helm uninstall` 不会删除该盘。若解开 `create: true` 让 Chart 新建 PVC，uninstall 会删除该 PVC，已传入数据会丢失。预热与占卡须同一 `claimName` / release 名 / `BaseName`。不要设 `Workspace.enabled: false` 来复用 PVC。
 
-云网默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。深圳临时集群用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)，说明见 [`../docs/sz-k8s-hostpath.md`](../docs/sz-k8s-hostpath.md)。新深圳集群用 [`values-sz-k8s-prod-h800.yaml`](helm/values-sz-k8s-prod-h800.yaml)，说明见 [`../docs/sz-k8s-prod-pod.md`](../docs/sz-k8s-prod-pod.md)。
+云网默认镜像为 `harbor.xa.hqzyai.com:19443/llm-course/lab:v2`。自定义镜像 push 至个人 Harbor 项目后替换 `ContainerImage`，详见 [`../docs/harbor-images.md`](../docs/harbor-images.md)。深圳临时集群用 [`values-sz-h200-hostpath.yaml`](helm/values-sz-h200-hostpath.yaml)，说明见 [`../docs/sz-k8s-hostpath.md`](../docs/sz-k8s-hostpath.md)。新深圳集群用 [`values-sz-k8s-prod-h800.yaml`](helm/values-sz-k8s-prod-h800.yaml)，说明见 [`../docs/sz-k8s-prod-pod.md`](../docs/sz-k8s-prod-pod.md)。调度到 H200 时按 [`../docs/sz-k8s-prod-h200-network.md`](../docs/sz-k8s-prod-h200-network.md) 增加 `ExtraEnv`。
 
 ### 部署前必填项
 

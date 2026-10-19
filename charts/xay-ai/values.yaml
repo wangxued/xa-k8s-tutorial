@@ -10,9 +10,10 @@ BaseName: ai-workload
 ContainerImage: harbor.xa.hqzyai.com:19443/llm-course/lab:v2
 ImagePullPolicy: IfNotPresent
 
-# GPU 类型。云网：5090、H200、H20。新深圳集群 sz-k8s-prod：H800。
-# 5090 与 H20 仅支持 h3c-csi-sc-nfs；H200 支持 h3c-csi-sc-nfs 和 h3c-csi-sc-epc。
-# H800 没有共享盘，用 local-path（节点 /data）和 local-path-data1（节点 /data1），访问模式 ReadWriteOnce。
+# GPU 类型。云网：5090、H200、H20。新深圳集群 sz-k8s-prod：H800 或 H200。
+# 云网 5090 与 H20 仅支持 h3c-csi-sc-nfs；云网 H200 支持 h3c-csi-sc-nfs 和 h3c-csi-sc-epc。
+# 新深圳集群的 H800 和 H200 没有共享盘，用 local-path（节点 /data）和 local-path-data1（节点 /data1），访问模式 ReadWriteOnce。
+# 该集群 H200 访问公网还要在 ExtraEnv 里写代理，见 docs/sz-k8s-prod-h200-network.md。
 # H20 当前只有 1 台（8 卡），仅适用于单机任务，不能用于多机训练。
 GPU: H200
 
@@ -147,6 +148,7 @@ NodeSelector: {}
 Tolerations: []
 Affinity: {}
 
+# 追加到容器 env。新深圳集群 H200 访问公网时在这里写代理，见 docs/sz-k8s-prod-h200-network.md。
 ExtraEnv: []
 ExtraVolumeMounts: []
 ExtraVolumes: []
