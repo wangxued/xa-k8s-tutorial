@@ -46,9 +46,9 @@ ExtraEnv:
   - name: HTTPS_PROXY
     value: "http://33.1.42.5:8888"
   - name: no_proxy
-    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com"
+    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com"
   - name: NO_PROXY
-    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com"
+    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com"
 
 Command: '["bash", "-lc", "--"]'
 Args: '["cd /workspace && while true; do sleep 3600; done"]'

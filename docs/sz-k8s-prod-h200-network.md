@@ -26,7 +26,7 @@
 | `10.244.0.0/16` | Pod 网段 |
 | `10.96.0.0/12` | Service 网段 |
 | `.svc`、`.cluster.local` | 集群内域名 |
-| `harbor.sz-prod.hqzyai.com` | 本集群镜像仓库，走集群内入口 |
+| `.hqzyai.com` | 这个后缀下的全部域名，含 `harbor.sz-prod.hqzyai.com`。前面加一个点，不要写成 `*.hqzyai.com` |
 
 节点已经能替 Pod 拉取公网镜像。镜像地址写在 `image` 里即可，不用为了拉镜像再改 kubelet。容器启动之后，里面的程序访问公网仍然要靠下面的环境变量。
 
@@ -49,12 +49,12 @@ ExtraEnv:
   - name: HTTPS_PROXY
     value: "http://33.1.42.5:8888"
   - name: no_proxy
-    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com"
+    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com"
   - name: NO_PROXY
-    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com"
+    value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com"
 ```
 
-可以直接复制 [`examples/helm/values-sz-k8s-prod-h200.yaml`](../examples/helm/values-sz-k8s-prod-h200.yaml)，里面已经写好这组变量。其余磁盘字段按 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md) 填写，然后升级：
+新任务可以直接复制 [`examples/helm/values-sz-k8s-prod-h200.yaml`](../examples/helm/values-sz-k8s-prod-h200.yaml)，里面已经写好这组变量。其余磁盘字段按 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md) 填写：
 
 ```bash
 helm upgrade --install my-task ./charts/xay-ai \
@@ -62,7 +62,7 @@ helm upgrade --install my-task ./charts/xay-ai \
   -f values-my-sz-prod.yaml
 ```
 
-升级会重建 Pod。还没写进 PVC 的文件会消失，先把要留的数据放到 `/workspace`。
+已经在跑、并且占着卡的任务不要为了加上代理再执行 `helm upgrade`。模板一变就会新建 Pod。还没写进 PVC 的文件会消失。
 
 ## 自己写 Deployment
 
@@ -91,22 +91,18 @@ spec:
             - name: HTTPS_PROXY
               value: "http://33.1.42.5:8888"
             - name: no_proxy
-              value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com"
+              value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com"
             - name: NO_PROXY
-              value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com"
+              value: "localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,.hqzyai.com"
 ```
 
-已经在跑的 Deployment 可以用命令补上，效果和改 YAML 后再 `kubectl apply` 相同，Pod 会滚动重建：
+已经占着卡的 Deployment 不要用 `kubectl set env` 或 `kubectl apply` 去补这组变量。环境变量写在 Pod 模板里，改模板一定会新建 Pod，正在跑的容器不会原地带上代理。
 
-```bash
-kubectl -n <namespace> set env deployment/<name> \
-  http_proxy=http://33.1.42.5:8888 \
-  https_proxy=http://33.1.42.5:8888 \
-  HTTP_PROXY=http://33.1.42.5:8888 \
-  HTTPS_PROXY=http://33.1.42.5:8888 \
-  no_proxy=localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com \
-  NO_PROXY=localhost,127.0.0.1,::1,10.244.0.0/16,10.96.0.0/12,.svc,.cluster.local,cluster.local,harbor.sz-prod.hqzyai.com
-```
+2026-10-19 取样，这个集群里申请了 GPU 的 Deployment 有 34 个，其中 32 个的更新策略是 `Recreate`。这种策略先删掉旧 Pod，卡立刻空出来，别的 Pending 任务可以排上去。节点故障后的绑回只认原来的 ReplicaSet；模板一变就是新的 ReplicaSet，不会把卡留给他。
+
+副本数是 1、策略是 `RollingUpdate`、并且 `maxUnavailable` 算出来是 0 时，旧 Pod 会先留着。节点上没有空闲卡时，新 Pod 一直 Pending，旧进程继续占卡，代理也不会进到正在跑的容器里。节点上还有空闲卡时，新 Pod 起来之后旧 Pod 会被停掉，内存里的进度会丢。
+
+要访问公网时，用带这组变量的新任务。已经在跑的任务继续跑，等用户自己停掉并重新提交之后再生效。
 
 ## 在容器里检查
 
@@ -124,4 +120,4 @@ kubectl -n <namespace> exec deployment/<name> -- python -c \
   'import urllib.request; print(urllib.request.urlopen("http://www.baidu.com", timeout=15).status)'
 ```
 
-没有这组变量时，同一个地址会解析失败或一直等到超时。本集群 Harbor `harbor.sz-prod.hqzyai.com` 在 `no_proxy` 里，容器访问它不经过代理。
+没有这组变量时，同一个地址会解析失败或一直等到超时。`.hqzyai.com` 会让 `harbor.sz-prod.hqzyai.com` 这类地址不走代理。`curl`、`pip` 和 Go 程序认的是前面这个点，不认 `*.hqzyai.com`。
