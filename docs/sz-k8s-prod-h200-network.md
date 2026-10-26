@@ -1,6 +1,6 @@
 # 新深圳集群 sz-k8s-prod：H200 访问公网
 
-新深圳集群上，自己创建的 H200 容器不能直接打开公网。要在 Pod 里写上集群提供的 HTTP 代理，容器里认这个变量的程序才能访问公网。机器名单见 [`sz-k8s-prod-usage.md`](sz-k8s-prod-usage.md)。工作台提交的 H200 训练任务已经带上同一组变量，不用在表单里再填。
+新深圳集群上，自己创建的 H200 容器不能直接打开公网。要在 Pod 里写上集群提供的 HTTP 代理，容器里认这个变量的程序才能访问公网。开发容器的机器见 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md)。工作台提交的 H200 训练任务已经带上同一组变量，不用在表单里再填，见 [`sz-k8s-prod-queue-usage.md`](sz-k8s-prod-queue-usage.md)。
 
 现在不要选择 H800，这些机器调度不到。临时集群 `sz-k8s` 的 4 台公网 H200 不使用本文。节点和磁盘的其他约定见 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md)。
 

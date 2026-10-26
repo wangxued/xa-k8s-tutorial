@@ -1,6 +1,6 @@
 # 新深圳集群 sz-k8s-prod：创建 Pod
 
-这是新深圳集群上创建开发 Pod 的说明，不是 4 台公网 H200 的临时集群。训练队列、哪些机器现在能用，见 [`sz-k8s-prod-usage.md`](sz-k8s-prod-usage.md)。临时集群仍用 [`sz-k8s-hostpath.md`](sz-k8s-hostpath.md)，那篇里的 hostPath 不能用到这里。H200 上的容器访问公网要单独配代理，见 [`sz-k8s-prod-h200-network.md`](sz-k8s-prod-h200-network.md)。
+这是新深圳集群上创建开发 Pod 的说明，不是 4 台公网 H200 的临时集群。工作台训练的共同步骤见 [`gpu-queue-scheduling.md`](gpu-queue-scheduling.md)，深圳队列的机器、Scratch 和代理见 [`sz-k8s-prod-queue-usage.md`](sz-k8s-prod-queue-usage.md)。临时集群仍用 [`sz-k8s-hostpath.md`](sz-k8s-hostpath.md)，那篇里的 hostPath 不能用到这里。H200 上的容器访问公网要单独配代理，见 [`sz-k8s-prod-h200-network.md`](sz-k8s-prod-h200-network.md)。
 
 | 项 | 值 |
 |---|---|
