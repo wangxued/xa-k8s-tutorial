@@ -9,7 +9,7 @@
 
 | 目标 | 使用 | Chart / 资源类型 |
 |------|------|------------------|
-| SSH 进容器写代码、单机调试、Jupyter、长期占 1～8 卡 | **单机开发** | [`xay-ai`](../charts/xay-ai/) → **Deployment** |
+| SSH 进容器写代码、单机调试、Jupyter | **单机开发** | [`xay-ai`](../charts/xay-ai/) → **Deployment** |
 | 跨多台 GPU 节点跑 `torchrun` / DeepSpeed 分布式训练 | **多机训练** | [`xay-ai-dist-train`](../charts/xay-ai-dist-train/) → **Indexed Job** |
 
 **不宜**通过把 Deployment 的 `Replicas` 调大来做多机训练——各副本彼此独立，不会自动组成分布式进程组。
@@ -211,8 +211,6 @@ Workspace 三种写法（**默认安全模式是 `create: false`**，新建 PVC 
 
 - **Deployment**（`xay-ai`）：最近连续 2 小时 GPU 几乎未使用，且下一轮巡检仍空闲，可能被平台 **缩容**（常见为副本数变为 `0`）。不是「空闲 1 小时就清理」。
 - **Job**（`xay-ai-dist-train`）：当前 **不在 gpu-gc 回收范围内**；应在训练脚本正常退出，依赖 Job 完成 + `ttlSecondsAfterFinished` 释放 GPU。
-
-若在 Job 内长期运行 `sleep infinity` 占卡，GPU 不会被 gpu-gc 自动回收。
 
 ---
 
