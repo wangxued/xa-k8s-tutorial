@@ -1,6 +1,6 @@
 # 新深圳集群 sz-k8s-prod：队列调度使用说明
 
-本文档只介绍深圳集群和云网不一样的地方。页面步骤、表单校验、排队和位次见 [`gpu-queue-scheduling.md`](gpu-queue-scheduling.md)。开发容器的 Helm 和 Deployment 见 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md)。
+本文档只介绍深圳集群和云网不一样的地方。页面步骤、表单校验、排队和位次，以及开发池和队列池的区别，见 [`gpu-queue-scheduling.md`](gpu-queue-scheduling.md)。开发容器的 Helm 和 Deployment 见 [`sz-k8s-prod-pod.md`](sz-k8s-prod-pod.md)。
 
 > **日期**：2026-10-26。工作台上的已用卡数会变，以页面刷新后的数字为准。
 
@@ -26,7 +26,7 @@
 
 ## 1. 存储
 
-深圳队列没有云网那种 `h3c-csi-sc-nfs` 或 `h3c-csi-sc-epc` 共享盘，Workspace 下拉是空的。
+深圳队列没有云网那种 `h3c-csi-sc-nfs` 或 `h3c-csi-sc-epc` 共享盘，Workspace 下拉是空的。开发机上的 `/workspace` 在本机的 `local-path-data1`，训练任务挂不上，不能按云网那样用同一块盘交接代码和结果。云网有共享盘时的配合见 [`gpu-queue-scheduling.md`](gpu-queue-scheduling.md)。
 
 打开「启用 scratch」，来源选「新建」：
 

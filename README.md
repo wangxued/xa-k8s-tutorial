@@ -123,7 +123,7 @@ StorageClass 支持矩阵：
 | [`docs/kubeconfig-local-setup.md`](docs/kubeconfig-local-setup.md) | 本机 kubeconfig 配置、多集群管理、Lens/VS Code context 重复排查 |
 | [`charts/xay-ai/README.md`](charts/xay-ai/README.md) | Helm Chart 参数、GPU/StorageClass、PVC、共享内存、HTTPRoute 配置 |
 | [`docs/h20-node-usage.md`](docs/h20-node-usage.md) | **H20 节点使用说明**：节点规格、`GPU: H20` 配置、存储限制、常见误用 |
-| [`docs/gpu-queue-scheduling.md`](docs/gpu-queue-scheduling.md) | **队列调度**：云网和深圳共用的提交、排队，以及存储和网络差别 |
+| [`docs/gpu-queue-scheduling.md`](docs/gpu-queue-scheduling.md) | **队列调度**：开发池与队列池的区别，以及云网和深圳共用的提交、排队 |
 | [`docs/sz-k8s-prod-queue-usage.md`](docs/sz-k8s-prod-queue-usage.md) | **深圳队列**：H200 训练、Scratch、代理和镜像。页面步骤见队列调度说明 |
 | [`docs/sz-k8s-prod-pod.md`](docs/sz-k8s-prod-pod.md) | **新深圳集群**：创建开发 Pod、本地盘、禁止 hostPath。机器范围见使用说明 |
 | [`docs/sz-k8s-prod-h200-network.md`](docs/sz-k8s-prod-h200-network.md) | **新深圳集群 H200 公网**：Pod 里配置 `http://33.1.42.5:8888` |
